@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Api;
@@ -33,6 +32,8 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
+use OrangeHRM\Core\Api\V2\Validator\Rules\EntityUniquePropertyOption;
+use OrangeHRM\Entity\Leave;
 use OrangeHRM\Entity\LeaveType;
 use OrangeHRM\Leave\Api\Model\LeaveTypeModel;
 use OrangeHRM\Leave\Dto\LeaveTypeSearchFilterParams;
@@ -52,7 +53,9 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Get(
      *     path="/api/v2/leave/leave-types/{id}",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Leave Type"},
+     *     summary="Get a Leave Type",
+     *     operationId="get-a-leave-type",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -103,7 +106,9 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Get(
      *     path="/api/v2/leave/leave-types",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Leave Type"},
+     *     summary="List All Leave Types",
+     *     operationId="list-all-leave-types",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -173,12 +178,15 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Post(
      *     path="/api/v2/leave/leave-types",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Leave Type"},
+     *     summary="Create a Leave Type",
+     *     operationId="create-a-leave-type",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="situational", type="boolean", default="false")
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Leave\Api\LeaveTypeAPI::PARAM_RULE_NAME_MAX_LENGTH),
+     *             @OA\Property(property="situational", type="boolean", default="false"),
+     *             required={"name"}
      *         )
      *     ),
      *     @OA\Response(response="200",
@@ -223,12 +231,20 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @param EntityUniquePropertyOption|null $uniqueOption
      * @return ParamRuleCollection
      */
-    private function getCommonBodyParamRuleCollection(): ParamRuleCollection
+    private function getCommonBodyParamRuleCollection(?EntityUniquePropertyOption $uniqueOption = null): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(self::PARAMETER_NAME, new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH])),
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_NAME,
+                    new Rule(Rules::STRING_TYPE),
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
+                    new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [LeaveType::class, 'name', $uniqueOption])
+                )
+            ),
             new ParamRule(self::PARAMETER_SITUATIONAL, new Rule(Rules::BOOL_TYPE))
         );
     }
@@ -236,7 +252,9 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Put(
      *     path="/api/v2/leave/leave-types/{id}",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Leave Type"},
+     *     summary="Update a Leave Type",
+     *     operationId="update-a-leave-type",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -278,7 +296,10 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
-        $paramRules = $this->getCommonBodyParamRuleCollection();
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
+        $paramRules = $this->getCommonBodyParamRuleCollection($uniqueOption);
         $paramRules->addParamValidation($this->getIdParamRule());
         return $paramRules;
     }
@@ -286,9 +307,12 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Delete(
      *     path="/api/v2/leave/leave-types",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Leave Type"},
+     *     summary="Delete Leave Types",
+     *     operationId="delete-leave-types",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
@@ -296,7 +320,10 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
      */
     public function delete(): EndpointResourceResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getLeaveTypeService()->getLeaveTypeDao()->getExistingLeaveTypeIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getLeaveTypeService()->getLeaveTypeDao()->deleteLeaveType($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }
@@ -307,7 +334,10 @@ class LeaveTypeAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForDelete(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(CommonParams::PARAMETER_IDS),
+            new ParamRule(
+                CommonParams::PARAMETER_IDS,
+                new Rule(Rules::INT_ARRAY)
+            ),
         );
     }
 }

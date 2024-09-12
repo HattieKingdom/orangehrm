@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -85,6 +84,8 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/job-titles/{id}",
      *     tags={"Admin/Job Title"},
+     *     summary="Get a Job Title",
+     *     operationId="get-a-job-title",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -130,6 +131,8 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/job-titles",
      *     tags={"Admin/Job Title"},
+     *     summary="List All Job Titles",
+     *     operationId="list-all-job-titles",
      *     @OA\Parameter(
      *         name="activeOnly",
      *         in="query",
@@ -204,12 +207,14 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/job-titles",
      *     tags={"Admin/Job Title"},
+     *     summary="Create a Job Title",
+     *     operationId="create-a-job-title",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="title", type="string"),
-     *             @OA\Property(property="description", type="string", default=null),
-     *             @OA\Property(property="note", type="string", default=null),
+     *             @OA\Property(property="title", type="string", maxLength=OrangeHRM\Admin\Api\JobTitleAPI::PARAM_RULE_TITLE_MAX_LENGTH),
+     *             @OA\Property(property="description", type="string", default=null, maxLength=OrangeHRM\Admin\Api\JobTitleAPI::PARAM_RULE_DESCRIPTION_MAX_LENGTH),
+     *             @OA\Property(property="note", type="string", default=null, maxLength=OrangeHRM\Admin\Api\JobTitleAPI::PARAM_RULE_NOTE_MAX_LENGTH),
      *             @OA\Property(property="specification", ref="#/components/schemas/Base64AttachmentOrNull"),
      *             required={"title"}
      *         )
@@ -303,20 +308,28 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForCreate(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            $this->getTitleRule(false),
             $this->getValidationDecorator()->notRequiredParamRule(
                 $this->getSpecificationRule()
             ),
-            ...$this->getCommonBodyValidationRules(),
+            ...$this->getCommonBodyValidationRules($this->getJobTitleCommonUniqueOption()),
         );
     }
 
     /**
+     * @param EntityUniquePropertyOption|null $uniqueOption
      * @return ParamRule[]
      */
-    protected function getCommonBodyValidationRules(): array
+    protected function getCommonBodyValidationRules(?EntityUniquePropertyOption $uniqueOption = null): array
     {
         return [
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_TITLE,
+                    new Rule(Rules::STRING_TYPE),
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_TITLE_MAX_LENGTH]),
+                    new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [JobTitle::class, 'jobTitleName', $uniqueOption])
+                )
+            ),
             $this->getValidationDecorator()->notRequiredParamRule(
                 new ParamRule(
                     self::PARAMETER_DESCRIPTION,
@@ -337,27 +350,15 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
-     * @param bool $update
-     * @return ParamRule
+     * @return EntityUniquePropertyOption
      */
-    protected function getTitleRule(bool $update): ParamRule
+    private function getJobTitleCommonUniqueOption(): EntityUniquePropertyOption
     {
-        $entityProperties = new EntityUniquePropertyOption();
-        $ignoreValues = ['isDeleted' => true];
-        if ($update) {
-            $ignoreValues['getId'] = $this->getRequestParams()->getInt(
-                RequestParams::PARAM_TYPE_ATTRIBUTE,
-                CommonParams::PARAMETER_ID
-            );
-        }
-        $entityProperties->setIgnoreValues($ignoreValues);
-
-        return new ParamRule(
-            self::PARAMETER_TITLE,
-            new Rule(Rules::STRING_TYPE),
-            new Rule(Rules::LENGTH, [null, self::PARAM_RULE_TITLE_MAX_LENGTH]),
-            new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [JobTitle::class, 'jobTitleName', $entityProperties])
-        );
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreValues([
+            'isDeleted' => true
+        ]);
+        return $uniqueOption;
     }
 
     /**
@@ -378,6 +379,8 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/job-titles/{id}",
      *     tags={"Admin/Job Title"},
+     *     summary="Update a Job Title",
+     *     operationId="update-a-job-title",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -385,9 +388,9 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="title", type="string"),
-     *             @OA\Property(property="description", type="string", default=null),
-     *             @OA\Property(property="note", type="string", default=null),
+     *             @OA\Property(property="title", type="string", maxLength=OrangeHRM\Admin\Api\JobTitleAPI::PARAM_RULE_TITLE_MAX_LENGTH),
+     *             @OA\Property(property="description", type="string", default=null, maxLength=OrangeHRM\Admin\Api\JobTitleAPI::PARAM_RULE_DESCRIPTION_MAX_LENGTH),
+     *             @OA\Property(property="note", type="string", default=null, maxLength=OrangeHRM\Admin\Api\JobTitleAPI::PARAM_RULE_NOTE_MAX_LENGTH),
      *             @OA\Property(property="currentJobSpecification", type="string", enum=OrangeHRM\Admin\Api\JobTitleAPI::CURRENT_JOB_SPECIFICATION, default=null),
      *             @OA\Property(property="specification", ref="#/components/schemas/Base64AttachmentOrNull"),
      *             required={"title"}
@@ -457,6 +460,9 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
+        $uniqueOption = $this->getJobTitleCommonUniqueOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         $currentJobSpecification = $this->getRequestParams()->getStringOrNull(
             RequestParams::PARAM_TYPE_BODY,
             self::PARAMETER_CURRENT_JOB_SPECIFICATION
@@ -466,14 +472,13 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
                 CommonParams::PARAMETER_ID,
                 new Rule(Rules::POSITIVE)
             ),
-            $this->getTitleRule(true),
             $this->getValidationDecorator()->notRequiredParamRule(
                 new ParamRule(
                     self::PARAMETER_CURRENT_JOB_SPECIFICATION,
                     new Rule(Rules::IN, [self::CURRENT_JOB_SPECIFICATION]),
                 )
             ),
-            ...$this->getCommonBodyValidationRules(),
+            ...$this->getCommonBodyValidationRules($uniqueOption),
         );
         if (!in_array(
             $currentJobSpecification,
@@ -494,15 +499,21 @@ class JobTitleAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/admin/job-titles",
      *     tags={"Admin/Job Title"},
+     *     summary="Delete Job Titles",
+     *     operationId="delete-job-titles",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getJobTitleService()->getJobTitleDao()->getExistingJobTitleIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getJobTitleService()->deleteJobTitle($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }

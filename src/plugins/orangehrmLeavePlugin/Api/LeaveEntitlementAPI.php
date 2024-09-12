@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Api;
@@ -76,6 +75,8 @@ class LeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/leave/leave-entitlements/{id}",
      *     tags={"Leave/Entitlements"},
+     *     summary="Get a Leave Entitlement",
+     *     operationId="get-a-leave-entitlement",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -157,6 +158,8 @@ class LeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/leave/leave-entitlements",
      *     tags={"Leave/Entitlements"},
+     *     summary="List All Leave Entitlements",
+     *     operationId="list-all-leave-entitlements",
      *     @OA\Parameter(
      *         name="empNumber",
      *         in="query",
@@ -345,6 +348,8 @@ class LeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/leave/leave-entitlements",
      *     tags={"Leave/Entitlements"},
+     *     summary="Assign Leave Entitlements to Employees",
+     *     operationId="assign-leave-entitlements-to-employees",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
@@ -519,7 +524,12 @@ class LeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      */
     private function getLeaveTypeIdParamRule(): ParamRule
     {
-        return new ParamRule(LeaveCommonParams::PARAMETER_LEAVE_TYPE_ID, new Rule(LeaveTypeIdRule::class));
+        return new ParamRule(
+            LeaveCommonParams::PARAMETER_LEAVE_TYPE_ID,
+            new Rule(Rules::POSITIVE),
+            new Rule(Rules::INT_VAL),
+            new Rule(LeaveTypeIdRule::class)
+        );
     }
 
     /**
@@ -534,6 +544,8 @@ class LeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/leave/leave-entitlements/{id}",
      *     tags={"Leave/Entitlements"},
+     *     summary="Update a Leave Entitlement",
+     *     operationId="update-a-leave-entitlement",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -604,15 +616,33 @@ class LeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/leave/leave-entitlements",
      *     tags={"Leave/Entitlements"},
+     *     summary="Delete Leave Entitlements",
+     *     operationId="delete-leave-entitlements",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(
+     *         response="400",
+     *         description="Bad Request - Leave entitlement not accessible",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="status", type="string", default="400"),
+     *                 @OA\Property(property="message", type="string", default="Bad Request")
+     *             )
+     *         )
+     *     )
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getLeaveEntitlementService()->getLeaveEntitlementDao()->getExistingLeaveEntitlementIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
 
         $leaveEntitlements = $this->getLeaveEntitlementService()
             ->getLeaveEntitlementDao()->getLeaveEntitlementsByIds($ids);
@@ -635,7 +665,10 @@ class LeaveEntitlementAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForDelete(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(CommonParams::PARAMETER_IDS, new Rule(Rules::ARRAY_TYPE))
+            new ParamRule(
+                CommonParams::PARAMETER_IDS,
+                new Rule(Rules::INT_ARRAY)
+            )
         );
     }
 }

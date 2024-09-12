@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Recruitment\Dao;
@@ -48,6 +47,7 @@ class VacancyDao extends BaseDao
     private function getVacancyListPaginator(VacancySearchFilterParams $vacancySearchFilterParams): Paginator
     {
         $q = $this->getVacanciesQueryBuilderWrapper($vacancySearchFilterParams)->getQueryBuilder();
+        $this->setSortingAndPaginationParams($q, $vacancySearchFilterParams);
         return $this->getPaginator($q);
     }
 
@@ -61,8 +61,6 @@ class VacancyDao extends BaseDao
         $q = $this->createQueryBuilder(Vacancy::class, 'vacancy');
         $q->leftJoin('vacancy.jobTitle', 'jobTitle');
         $q->leftJoin('vacancy.hiringManager', 'hiringManager');
-
-        $this->setSortingAndPaginationParams($q, $vacancySearchFilterParamHolder);
 
         if (!is_null($vacancySearchFilterParamHolder->getJobTitleId())) {
             $q->andWhere('jobTitle.id = :jobTitleCode')
@@ -137,6 +135,21 @@ class VacancyDao extends BaseDao
     }
 
     /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingVacancyIds(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(Vacancy::class, 'vacancy');
+
+        $qb->select('vacancy.id')
+            ->andWhere($qb->expr()->in('vacancy.id', ':ids'))
+            ->setParameter('ids', $ids);
+
+        return $qb->getQuery()->getSingleColumnResult();
+    }
+
+    /**
      * @param array $toBeDeletedVacancyIds
      * @return bool
      */
@@ -152,11 +165,12 @@ class VacancyDao extends BaseDao
 
     /**
      * @param VacancySearchFilterParams $vacancySearchFilterParams
-     * @return array
+     * @return int[]
      */
-    public function getVacancyListGroupByHiringManager(VacancySearchFilterParams $vacancySearchFilterParams): array
+    public function getHiringManagerEmpNumberList(VacancySearchFilterParams $vacancySearchFilterParams): array
     {
         $qb = $this->getVacanciesQueryBuilderWrapper($vacancySearchFilterParams)->getQueryBuilder();
+        $qb->select('hiringManager.empNumber');
         $qb->groupBy('hiringManager.empNumber');
         return $qb->getQuery()->execute();
     }

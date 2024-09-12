@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Controller;
@@ -22,11 +21,14 @@ namespace OrangeHRM\Pim\Controller;
 use OrangeHRM\Core\Vue\Component;
 use OrangeHRM\Core\Vue\Prop;
 use OrangeHRM\Framework\Http\Request;
+use OrangeHRM\I18N\Traits\Service\I18NHelperTrait;
 use OrangeHRM\Pim\Dto\ReportingMethodSearchFilterParams;
 use OrangeHRM\Pim\Service\ReportingMethodConfigurationService;
 
 class EmployeeReportToController extends BaseViewEmployeeController
 {
+    use I18NHelperTrait;
+
     /**
      * @var ReportingMethodConfigurationService|null
      */
@@ -55,6 +57,12 @@ class EmployeeReportToController extends BaseViewEmployeeController
             $reportingMethods = $this->getReportingMethodConfigurationService()->getReportingMethodArray(
                 $reportingMethodParamHolder
             );
+            $reportingMethods = array_map(function ($reportingMethod) {
+                return [
+                    'id' => $reportingMethod['id'],
+                    'label' => $this->getI18NHelper()->transBySource($reportingMethod['label'])
+                ];
+            }, $reportingMethods);
             $component->addProp(new Prop('emp-number', Prop::TYPE_NUMBER, $empNumber));
             $component->addProp(new Prop('reporting-methods', Prop::TYPE_ARRAY, $reportingMethods));
             $this->setComponent($component);

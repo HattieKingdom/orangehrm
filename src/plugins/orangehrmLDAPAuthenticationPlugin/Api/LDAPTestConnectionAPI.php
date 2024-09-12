@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\LDAP\Api;
@@ -68,6 +67,129 @@ class LDAPTestConnectionAPI extends Endpoint implements CollectionEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/admin/ldap-test-connection",
+     *     tags={"Admin/LDAP Configuration"},
+     *     summary="Test LDAP Connection",
+     *     operationId="test-ldap-connection",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="hostname",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_HOST_NAME_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="port", type="integer"),
+     *             @OA\Property(
+     *                 property="encryption",
+     *                 type="string",
+     *                 enum={
+     *                     OrangeHRM\LDAP\Api\LDAPConfigAPI::ENCRYPTION_NONE,
+     *                     OrangeHRM\LDAP\Api\LDAPConfigAPI::ENCRYPTION_TLS,
+     *                     OrangeHRM\LDAP\Api\LDAPConfigAPI::ENCRYPTION_SSL
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="ldapImplementation",
+     *                 type="string",
+     *                 enum={
+     *                     OrangeHRM\LDAP\Api\LDAPConfigAPI::LDAP_IMPLEMENTATION_OPEN_LDAP,
+     *                     OrangeHRM\LDAP\Api\LDAPConfigAPI::LDAP_IMPLEMENTATION_ACTIVE_DIRECTORY,
+     *                 }
+     *             ),
+     *             @OA\Property(property="bindAnonymously", type="boolean"),
+     *             @OA\Property(
+     *                 property="bindUserDN",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_BIND_USER_DISTINGUISHED_NAME_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="bindUserPassword",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_BIND_USER_PASSWORD_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="userLookupSettings", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(
+     *                         property="baseDN",
+     *                         type="string",
+     *                         maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_BASE_DISTINGUISHED_NAME_MAX_LENGTH
+     *                     ),
+     *                     @OA\Property(property="searchScope", type="string", enum={"one", "sub"}),
+     *                     @OA\Property(property="userNameAttribute", type="string"),
+     *                     @OA\Property(
+     *                         property="userSearchFilter",
+     *                         type="string",
+     *                         maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_USER_SEARCH_FILTER_MAX_LENGTH
+     *                     ),
+     *                     @OA\Property(property="userUniqueIdAttribute", type="string"),
+     *                     @OA\Property(property="employeeSelectorMapping", type="object")
+     *                 )
+     *             ),
+     *             @OA\Property(property="dataMapping", type="object",
+     *                 @OA\Property(
+     *                     property="firstName",
+     *                     type="string",
+     *                     maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_ATTRIBUTE_MAX_LENGTH
+     *                 ),
+     *                 @OA\Property(
+     *                     property="middleName",
+     *                     type="string",
+     *                     maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_ATTRIBUTE_MAX_LENGTH
+     *                 ),
+     *                 @OA\Property(
+     *                     property="lastName",
+     *                     type="string",
+     *                     maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_ATTRIBUTE_MAX_LENGTH
+     *                 ),
+     *                 @OA\Property(
+     *                     property="userStatus",
+     *                     type="string",
+     *                     maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_ATTRIBUTE_MAX_LENGTH
+     *                 ),
+     *                 @OA\Property(
+     *                     property="workEmail",
+     *                     type="string",
+     *                     maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_ATTRIBUTE_MAX_LENGTH
+     *                 ),
+     *                 @OA\Property(
+     *                     property="employeeId",
+     *                     type="string",
+     *                     maxLength=OrangeHRM\LDAP\Api\LDAPConfigAPI::PARAMETER_RULE_ATTRIBUTE_MAX_LENGTH
+     *                 ),
+     *             ),
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="category", type="string", example="Login"),
+     *                     @OA\Property(property="checks", type="object",
+     *                         @OA\Property(property="label", type="string"),
+     *                         @OA\Property(property="value", type="string"),
+     *                     )
+     *                 ),
+     *                 @OA\Items(
+     *                     @OA\Property(property="category", type="string", example="Lookup"),
+     *                     @OA\Property(property="checks", type="object",
+     *                         @OA\Property(property="label", type="string"),
+     *                         @OA\Property(property="value", type="object",
+     *                             @OA\Property(property="message", type="string"),
+     *                             @OA\Property(property="status", type="string"),
+     *                         ),
+     *                     ),
+     *                 ),
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
      * @inheritDoc
      */
     public function create(): EndpointResult

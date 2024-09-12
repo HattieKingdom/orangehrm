@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -117,6 +116,8 @@ class LocationAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/locations/{id}",
      *     tags={"Admin/Locations"},
+     *     summary="Get a Location",
+     *     operationId="get-a-location",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -149,6 +150,8 @@ class LocationAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/locations",
      *     tags={"Admin/Locations"},
+     *     summary="List All Locations",
+     *     operationId="list-all-locations",
      *     @OA\Parameter(
      *         name="name",
      *         in="query",
@@ -252,6 +255,8 @@ class LocationAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/locations",
      *     tags={"Admin/Locations"},
+     *     summary="Create a Location",
+     *     operationId="create-a-location",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
@@ -379,15 +384,21 @@ class LocationAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/admin/locations",
      *     tags={"Admin/Locations"},
+     *     summary="Delete Locations",
+     *     operationId="delete-locations",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getLocationService()->getLocationDao()->getExistingLocationIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getLocationService()->deleteLocations($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }
@@ -406,6 +417,8 @@ class LocationAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/locations/{id}",
      *     tags={"Admin/Locations"},
+     *     summary="Update a Location",
+     *     operationId="update-a-location",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")

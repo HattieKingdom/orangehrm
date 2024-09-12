@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Installer\Util;
@@ -28,6 +27,7 @@ use OrangeHRM\Core\Exception\KeyHandlerException;
 use OrangeHRM\Core\Utility\KeyHandler;
 use OrangeHRM\Core\Utility\PasswordHash;
 use OrangeHRM\Framework\Filesystem\Filesystem;
+use OrangeHRM\Installer\Exception\MigrationException;
 use OrangeHRM\Installer\Migration\V3_3_3\Migration;
 use OrangeHRM\Installer\Util\Dto\DatabaseConnectionWrapper;
 use OrangeHRM\Installer\Util\SystemConfig\SystemConfiguration;
@@ -68,6 +68,9 @@ class AppSetupUtility
         '5.3' => \OrangeHRM\Installer\Migration\V5_3_0\Migration::class,
         '5.4' => \OrangeHRM\Installer\Migration\V5_4_0\Migration::class,
         '5.5' => \OrangeHRM\Installer\Migration\V5_5_0\Migration::class,
+        '5.6' => \OrangeHRM\Installer\Migration\V5_6_0\Migration::class,
+        '5.6.1' => \OrangeHRM\Installer\Migration\V5_6_1\Migration::class,
+        '5.7' => \OrangeHRM\Installer\Migration\V5_7_0\Migration::class,
     ];
 
     public const INSTALLATION_DB_TYPE_NEW = 'new';
@@ -438,8 +441,8 @@ class AppSetupUtility
             $dbInfo[StateContainer::DB_HOST],
             $dbInfo[StateContainer::DB_PORT],
             $dbInfo[StateContainer::DB_NAME],
-            $dbInfo[StateContainer::DB_USER],
-            $dbInfo[StateContainer::DB_PASSWORD]
+            $dbInfo[StateContainer::ORANGEHRM_DB_USER] ?? $dbInfo[StateContainer::DB_USER],
+            $dbInfo[StateContainer::ORANGEHRM_DB_PASSWORD] ?? $dbInfo[StateContainer::DB_PASSWORD],
         ];
 
         $fs = new Filesystem();
@@ -489,6 +492,7 @@ class AppSetupUtility
      */
     public function runMigrations(string $fromVersion, ?string $toVersion = null): void
     {
+        StateContainer::getInstance()->clearMigrationCompleted();
         foreach ($this->getVersionsInRange($fromVersion, $toVersion) as $version) {
             $this->runMigrationFor($version);
         }
@@ -496,13 +500,14 @@ class AppSetupUtility
 
     /**
      * @param string $version
-     * @return void
      */
     public function runMigrationFor(string $version): void
     {
         if (!isset(self::MIGRATIONS_MAP[$version])) {
             throw new InvalidArgumentException("Invalid migration version `$version`");
         }
+
+        $this->throwMigrationErrorIfPreviousIncomplete();
 
         if (is_array(self::MIGRATIONS_MAP[$version])) {
             foreach (self::MIGRATIONS_MAP[$version] as $migration) {
@@ -515,6 +520,16 @@ class AppSetupUtility
     }
 
     /**
+     * @throws MigrationException
+     */
+    private function throwMigrationErrorIfPreviousIncomplete()
+    {
+        if (StateContainer::getInstance()->isMigrationCompleted() === false) {
+            throw MigrationException::previousMigrationIncomplete();
+        }
+    }
+
+    /**
      * @param string $migrationClass
      */
     private function _runMigration(string $migrationClass): void
@@ -523,12 +538,26 @@ class AppSetupUtility
         if ($migration instanceof AbstractMigration) {
             $version = $migration->getVersion();
             $this->getMigrationHelper()->logMigrationStarted($version);
+            StateContainer::getInstance()->setMigrationCompleted(false);
+            $this->disableExecutionTimeLimit();
             $migration->up();
             $this->getConfigHelper()->setConfigValue('instance.version', $version);
+            StateContainer::getInstance()->setMigrationCompleted(true);
             $this->getMigrationHelper()->logMigrationFinished($version);
             return;
         }
         throw new InvalidArgumentException("Invalid migration class `$migrationClass`");
+    }
+
+    /**
+     * Disable execution time limit to prevent migration failure
+     */
+    private function disableExecutionTimeLimit(): void
+    {
+        if (function_exists('set_time_limit')) {
+            $success = set_time_limit(0);
+            Logger::getLogger()->info('set_time_limit: ' . ($success ? 'success' : 'fail'));
+        }
     }
 
     /**

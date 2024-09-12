@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Buzz\Api;
@@ -68,6 +67,8 @@ class BuzzCommentAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/buzz/shares/{shareId}/comments/{commentId}",
      *     tags={"Buzz/Comments"},
+     *     summary="Get a Comment on a Post",
+     *     operationId="get-a-comment-on-a-post",
      *     @OA\PathParameter(
      *         name="shareId",
      *         @OA\Schema(type="integer")
@@ -153,6 +154,8 @@ class BuzzCommentAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/buzz/shares/{shareId}/comments",
      *     tags={"Buzz/Comments"},
+     *     summary="List All Comments on a Post",
+     *     operationId="list-all-comments-on-a-post",
      *     @OA\PathParameter(
      *         name="shareId",
      *         @OA\Schema(type="integer")
@@ -233,6 +236,8 @@ class BuzzCommentAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/buzz/shares/{shareId}/comments",
      *     tags={"Buzz/Comments"},
+     *     summary="Comment on a Post",
+     *     operationId="comment-on-a-post",
      *     @OA\PathParameter(
      *         name="shareId",
      *         @OA\Schema(type="integer")
@@ -331,6 +336,8 @@ class BuzzCommentAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/buzz/shares/{shareId}/comments/{commentId}",
      *     tags={"Buzz/Comments"},
+     *     summary="Edit a Comment on a Post",
+     *     operationId="edit-a-comment-on-a-post",
      *     @OA\PathParameter(
      *         name="shareId",
      *         @OA\Schema(type="integer")
@@ -413,6 +420,8 @@ class BuzzCommentAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/buzz/shares/{shareId}/comments/{commentId}",
      *     tags={"Buzz/Comments"},
+     *     summary="Delete a Comment on a Post",
+     *     operationId="delete-a-comment-on-a-post",
      *     @OA\PathParameter(
      *         name="shareId",
      *         @OA\Schema(type="integer")
@@ -433,7 +442,9 @@ class BuzzCommentAPI extends Endpoint implements CrudEndpoint
      *             ),
      *             @OA\Property(property="meta", type="object")
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound"),
+     *     @OA\Response(response="403", ref="#/components/responses/ForbiddenResponse")
      * )
      *
      * @inheritDoc

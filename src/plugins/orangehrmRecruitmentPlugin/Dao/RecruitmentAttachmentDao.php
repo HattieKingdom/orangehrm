@@ -5,17 +5,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Recruitment\Dao;
@@ -73,6 +72,21 @@ class RecruitmentAttachmentDao extends BaseDao
             return $attachment;
         }
         return null;
+    }
+
+    /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingVacancyAttachmentIds(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(VacancyAttachment::class, 'vacancyAttachment');
+
+        $qb->select('vacancyAttachment.id')
+            ->andWhere($qb->expr()->in('vacancyAttachment.id', ':ids'))
+            ->setParameter('ids', $ids);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**
@@ -174,6 +188,10 @@ class RecruitmentAttachmentDao extends BaseDao
         return $this->count($qb);
     }
 
+    /**
+     * @param array $toBeDeletedAttachmentIds
+     * @return bool
+     */
     public function deleteVacancyAttachments(array $toBeDeletedAttachmentIds): bool
     {
         $qr = $this->createQueryBuilder(VacancyAttachment::class, 'attachment');
@@ -316,6 +334,24 @@ class RecruitmentAttachmentDao extends BaseDao
         $q->setParameter('empNumber', $empNumber);
         $result = $q->getQuery()->getArrayResult();
         return array_column($result, 'id');
+    }
+
+    /**
+     * @param int[] $ids
+     * @param int $interviewId
+     * @return int[]
+     */
+    public function getExistingInterviewAttachmentIdsForInterview(array $ids, int $interviewId): array
+    {
+        $qb = $this->createQueryBuilder(InterviewAttachment::class, 'interviewAttachment');
+
+        $qb->select('interviewAttachment.id')
+            ->andWhere($qb->expr()->in('interviewAttachment.id', ':ids'))
+            ->andWhere($qb->expr()->eq('interviewAttachment.interview', ':interviewId'))
+            ->setParameter('ids', $ids)
+            ->setParameter('interviewId', $interviewId);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**

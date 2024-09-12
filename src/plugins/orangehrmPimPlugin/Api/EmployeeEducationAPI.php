@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -32,7 +31,6 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\EmployeeEducation;
 use OrangeHRM\Pim\Api\Model\EmployeeEducationModel;
 use OrangeHRM\Pim\Dto\EmployeeEducationSearchFilterParams;
@@ -70,6 +68,36 @@ class EmployeeEducationAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/educations/{id}",
+     *     tags={"PIM/Employee Education"},
+     *     summary="Get an Employee's Educational Qualification",
+     *     operationId="get-an-employees-educational-qualification",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeEducationModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResourceResult
@@ -118,6 +146,41 @@ class EmployeeEducationAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/educations",
+     *     tags={"PIM/Employee Education"},
+     *     summary="List an Employee's Educational Qualifications",
+     *     operationId="list-an-employees-educational-qualifications",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=EmployeeEducationSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeEducationModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="empNumber", type="integer")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @return EndpointCollectionResult
      * @throws Exception
      */
@@ -159,6 +222,57 @@ class EmployeeEducationAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/pim/employees/{empNumber}/educations",
+     *     tags={"PIM/Employee Education"},
+     *     summary="Add an Educational Qualification to an Employee",
+     *     operationId="add-an-educational-qualification-to-an-employee",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="educationId", type="integer"),
+     *             @OA\Property(
+     *                 property="institute",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeEducationAPI::PARAM_RULE_INSTITUTE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="major",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeEducationAPI::PARAM_RULE_MAJOR_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="year",
+     *                 type="integer",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeEducationAPI::PARAM_RULE_YEAR_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="score",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeEducationAPI::PARAM_RULE_SCORE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="startDate", type="string", format="date"),
+     *             @OA\Property(property="endDate", type="string", format="date"),
+     *             required={"educationId"}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeEducationModel"
+     *             ),
+     *             @OA\Property(property="meta")
+     *         )
+     *     )
+     * )
+     *
      * @inheritDoc
      * @throws Exception
      */
@@ -237,12 +351,71 @@ class EmployeeEducationAPI extends Endpoint implements CrudEndpoint
                 new ParamRule(
                     self::PARAMETER_END_DATE,
                     new Rule(Rules::API_DATE),
+                    new Rule(
+                        Rules::GREATER_THAN,
+                        [$this->getRequestParams()->getDateTimeOrNull(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_START_DATE)]
+                    )
                 ),
             ),
         ];
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/educations/{id}",
+     *     tags={"PIM/Employee Education"},
+     *     summary="Update an Employee's Educational Qualification",
+     *     operationId="update-an-employees-educational-qualification",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="educationId", type="integer"),
+     *             @OA\Property(
+     *                 property="institute",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeEducationAPI::PARAM_RULE_INSTITUTE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="major",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeEducationAPI::PARAM_RULE_MAJOR_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="year",
+     *                 type="integer",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeEducationAPI::PARAM_RULE_YEAR_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="score",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeEducationAPI::PARAM_RULE_SCORE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="startDate", type="string", format="date"),
+     *             @OA\Property(property="endDate", type="string", format="date"),
+     *             required={"educationId"}
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeEducationModel"
+     *             ),
+     *             @OA\Property(property="empNumber", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      * @throws Exception
      */
@@ -275,14 +448,33 @@ class EmployeeEducationAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/pim/employees/{empNumber}/educations",
+     *     tags={"PIM/Employee Education"},
+     *     summary="Delete an Employee's Educational Qualifications",
+     *     operationId="delete-an-employees-educational-qualifications",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     * )
+     *
      * @inheritDoc
-     * @throws DaoException
      * @throws Exception
      */
     public function delete(): EndpointResourceResult
     {
-        list($empNumber) = $this->getUrlAttributes();
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $empNumber = $this->getRequestParams()->getInt(
+            RequestParams::PARAM_TYPE_ATTRIBUTE,
+            CommonParams::PARAMETER_EMP_NUMBER
+        );
+        $ids = $this->getEmployeeEducationService()->getEmployeeEducationDao()->getExistingEmpEducationIdsByEmpNumber(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS),
+            $empNumber
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getEmployeeEducationService()->getEmployeeEducationDao()->deleteEmployeeEducations($empNumber, $ids);
         return new EndpointResourceResult(
             ArrayModel::class,
@@ -312,7 +504,6 @@ class EmployeeEducationAPI extends Endpoint implements CrudEndpoint
     /**
      * @param EmployeeEducation $employeeEducation
      * @return EmployeeEducation
-     * @throws DaoException
      */
     public function saveEmployeeEducation(EmployeeEducation $employeeEducation): EmployeeEducation
     {

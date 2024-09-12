@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Dao;
@@ -115,6 +114,21 @@ class EmailSubscriberDao extends BaseDao
     }
 
     /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingEmailSubscriberIds(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(EmailSubscriber::class, 'emailSubscriber');
+        $qb->select('emailSubscriber.id')
+            ->andWhere($qb->expr()->in('emailSubscriber.id', ':ids'))
+            ->setParameter('ids', $ids)
+            ->addOrderBy('emailSubscriber.id');
+
+        return $qb->getQuery()->getSingleColumnResult();
+    }
+
+    /**
      * @param int[] $emailSubscriberIds
      * @return int
      */
@@ -125,32 +139,5 @@ class EmailSubscriberDao extends BaseDao
             ->where($q->expr()->in('es.id', ':ids'))
             ->setParameter('ids', $emailSubscriberIds);
         return $q->getQuery()->execute();
-    }
-
-    /**
-     * Checks whether an email already exists for a particular subscription ID
-     * Can further set ignoreId to ignore a particular subscriber
-     * @param string $email
-     * @param int $subscriptionId
-     * @param int|null $ignoreId
-     * @return bool
-     */
-    public function isSubscriberEmailUnique(string $email, int $subscriptionId, ?int $ignoreId = null): bool
-    {
-        $qb = $this->createQueryBuilder(EmailSubscriber::class, 'subscriber');
-        $qb->leftJoin('subscriber.emailNotification', 'notification');
-
-        $qb->andWhere($qb->expr()->eq('notification.id', ':subscriptionId'))
-            ->setParameter('subscriptionId', $subscriptionId);
-        $qb->andWhere($qb->expr()->eq('subscriber.email', ':email'))
-            ->setParameter('email', $email);
-
-        if (isset($ignoreId)) {
-            $qb->andWhere($qb->expr()->neq('subscriber.id', ':id'))
-                ->setParameter('id', $ignoreId);
-        }
-
-        $emailList = $qb->getQuery()->execute();
-        return empty($emailList);
     }
 }

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Dao;
@@ -533,7 +532,7 @@ class LeaveRequestDao extends BaseDao
     public function getLeaveRequests(LeaveRequestSearchFilterParams $leaveRequestSearchFilterParams): array
     {
         $this->_markApprovedLeaveAsTaken();
-        return $this->getLeaveRequestsPaginator($leaveRequestSearchFilterParams)->getQuery()->execute();
+        return array_column($this->getLeaveRequestsPaginator($leaveRequestSearchFilterParams)->getQuery()->execute(), 0);
     }
 
     /**
@@ -556,9 +555,16 @@ class LeaveRequestDao extends BaseDao
         $q = $this->createQueryBuilder(LeaveRequest::class, 'leaveRequest')
             ->leftJoin('leaveRequest.leaves', 'leave')
             ->leftJoin('leaveRequest.employee', 'employee');
+        // For backwards compatibility
+        if ($leaveRequestSearchFilterParams->getSortField() === 'leave.date') {
+            $leaveRequestSearchFilterParams->setSortField('minDate');
+        }
         $this->setSortingAndPaginationParams($q, $leaveRequestSearchFilterParams);
         $q->addOrderBy('employee.lastName', ListSorter::ASCENDING)
             ->addOrderBy('employee.firstName', ListSorter::ASCENDING);
+
+        $q->addSelect('leaveRequest.id');
+        $q->addSelect('MIN(leave.date) as minDate');
 
         if (!is_null($leaveRequestSearchFilterParams->getEmpNumber())) {
             $q->andWhere('leaveRequest.employee = :empNumber')
@@ -607,6 +613,7 @@ class LeaveRequestDao extends BaseDao
             $q->andWhere($q->expr()->in('leave.status', ':statuses'))
                 ->setParameter('statuses', $statuses);
         }
+
         $q->addGroupBy('leaveRequest.id');
 
         $q->andWhere($q->expr()->isNull('employee.purgedAt'));
@@ -822,7 +829,7 @@ class LeaveRequestDao extends BaseDao
 
         $q->andWhere('leaveType.deleted = :leaveTypeDeleted')
            ->setParameter('leaveTypeDeleted', false);
-        $q->addOrderBy('leaveType.id', ListSorter::ASCENDING);
+        $q->addOrderBy('leaveTypeId', ListSorter::ASCENDING);
 
         return $q->getQuery()->getSingleColumnResult();
     }

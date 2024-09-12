@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -134,7 +133,10 @@ import usePaginate from '@ohrm/core/util/composable/usePaginate';
 import ReferenceIdAutocomplete from '@/orangehrmClaimPlugin/components/ReferenceIdAutocomplete.vue';
 import ClaimEventDropdown from '@/orangehrmClaimPlugin/components/ClaimEventDropdown.vue';
 import StatusDropdown from '@/orangehrmClaimPlugin/components/StatusDropdown.vue';
-import {validDateFormat} from '@/core/util/validation/rules';
+import {
+  shouldNotExceedCharLength,
+  validDateFormat,
+} from '@/core/util/validation/rules';
 import useDateFormat from '@/core/util/composable/useDateFormat';
 import EmployeeAutocomplete from '@/core/components/inputs/EmployeeAutocomplete.vue';
 import useEmployeeNameTranslate from '@/core/util/composable/useEmployeeNameTranslate';
@@ -158,8 +160,8 @@ const defaultFilters = {
 
 const defaultSortOrder = {
   'claimRequest.referenceId': 'DESC',
-  'claimRequest.employee.firstName': 'ASC',
-  'claimRequest.claimEvent.name': 'ASC',
+  'employee.firstName': 'ASC',
+  'claimEvent.name': 'ASC',
   'claimRequest.status': 'ASC',
   'claimRequest.submittedDate': 'ASC',
 };
@@ -291,7 +293,7 @@ export default {
           name: 'employee',
           title: this.$t('general.employee_name'),
           slot: 'title',
-          sortField: 'claimRequest.employee.firstName',
+          sortField: 'employee.firstName',
           style: {flex: 4},
         },
         {
@@ -299,7 +301,7 @@ export default {
           title: this.$t('claim.event_name'),
           slot: 'title',
           cellType: 'oxd-table-cell-truncate',
-          sortField: 'claimRequest.claimEvent.name',
+          sortField: 'claimEvent.name',
           style: {flex: 3},
         },
         {
@@ -331,7 +333,7 @@ export default {
         },
         {
           name: 'amount',
-          title: this.$t('claim.amount'),
+          title: this.$t('general.amount'),
           slot: 'title',
           sortField: 'claimRequest.amount',
           style: {flex: 3},
@@ -365,7 +367,7 @@ export default {
             {allowSameDate: true},
           ),
         ],
-        employee: [validSelection],
+        employee: [shouldNotExceedCharLength(100), validSelection],
       },
     };
   },

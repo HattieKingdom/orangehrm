@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 <template>
@@ -51,7 +50,11 @@
         '--error': taskFailed,
       }"
     >
-      {{ progressNotice }}
+      <span v-if="taskFailed">
+        {{ errorMessage }}. To learn more, check our FAQ at
+        <a :href="faqUrl" target="_blank"> starterhelp.orangehrm.com </a>
+      </span>
+      <span v-else>Please Wait. Installation in Progress</span>
     </oxd-text>
 
     <oxd-form-actions class="orangehrm-installer-page-action">
@@ -75,16 +78,16 @@
 import {onBeforeMount, ref, computed} from 'vue';
 import {APIService} from '@/core/util/services/api.service';
 import InstallerTasks from '@/components/InstallerTasks.vue';
-import ProgressBar from '@ohrm/oxd/core/components/Progressbar/Progressbar.vue';
 import useBeforeUnload from '@/core/util/composable/useBeforeUnload';
 import useInstaller from '@/core/util/composable/useInstaller';
 import {navigate} from '@/core/util/helper/navigation.ts';
 import useProgress from '@/core/util/composable/useProgress';
+import {OxdProgressbar} from '@ohrm/oxd';
 
 export default {
   name: 'InstallScreen',
   components: {
-    'oxd-progress': ProgressBar,
+    'oxd-progress': OxdProgressbar,
     'installer-tasks': InstallerTasks,
   },
   setup() {
@@ -159,12 +162,9 @@ export default {
       return tasks.value.findIndex((task) => task.state === 3) > -1;
     });
 
-    const progressNotice = computed(() => {
-      if (!taskFailed.value) return 'Please Wait. Installation in Progress';
-      return `${
-        errorText.value ? errorText.value : 'Installation has failed'
-      }. For more details check the error log in /src/log/installer.log file`;
-    });
+    const errorMessage = computed(() =>
+      taskFailed.value ? errorText.value ?? 'Installation has failed' : null,
+    );
 
     const progressType = computed(() => {
       return !taskFailed.value ? 'secondary' : 'error';
@@ -182,9 +182,15 @@ export default {
       taskFailed,
       progressType,
       progressText,
-      progressNotice,
+      errorMessage,
       onClickCleanup,
       onClickNext,
+    };
+  },
+  data() {
+    return {
+      faqUrl:
+        'https://starterhelp.orangehrm.com/hc/en-us/categories/360002856800-FAQs',
     };
   },
 };

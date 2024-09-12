@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -32,7 +31,6 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\EmployeeImmigrationRecord;
 use OrangeHRM\Pim\Api\Model\EmployeeImmigrationModel;
 use OrangeHRM\Pim\Dto\EmployeeImmigrationRecordSearchFilterParams;
@@ -71,8 +69,48 @@ class EmployeeImmigrationRecordAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/immigrations",
+     *     tags={"PIM/Employee Immigration"},
+     *     summary="List an Employee's Immigration Record",
+     *     operationId="list-an-employees-immigration-record",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="number",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=EmployeeImmigrationRecordSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeImmigrationModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="empNumber", type="integer")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
-     * @throws DaoException
      */
     public function getAll(): EndpointCollectionResult
     {
@@ -128,6 +166,59 @@ class EmployeeImmigrationRecordAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/pim/employees/{empNumber}/immigrations",
+     *     tags={"PIM/Employee Immigration"},
+     *     summary="Add an Immigration Record to an Employee",
+     *     operationId="add-an-immigration-record-to-an-employee",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="number",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeImmigrationRecordAPI::PARAM_RULE_DEFAULT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="issuedDate", type="string", format="date"),
+     *             @OA\Property(property="expiryDate", type="string", format="date"),
+     *             @OA\Property(property="type", type="integer"),
+     *             @OA\Property(
+     *                 property="status",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeImmigrationRecordAPI::PARAM_RULE_DEFAULT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="reviewDate", type="string", format="date"),
+     *             @OA\Property(
+     *                 property="countryCode",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeImmigrationRecordAPI::PARAM_RULE_COUNTRY_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="comment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeImmigrationRecordAPI::PARAM_RULE_COMMENT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="additionalProperties", type="boolean", default=true),
+     *             required={"number", "type"}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeImmigrationModel"
+     *             ),
+     *             @OA\Property(property="empNumber", type="integer")
+     *         )
+     *     )
+     * )
+     *
      * @inheritDoc
      */
     public function create(): EndpointResourceResult
@@ -157,10 +248,12 @@ class EmployeeImmigrationRecordAPI extends Endpoint implements CrudEndpoint
     private function getCommonBodyValidationRules(): array
     {
         return [
-            new ParamRule(
-                self::PARAMETER_NUMBER,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_DEFAULT_MAX_LENGTH])
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_NUMBER,
+                    new Rule(Rules::STRING_TYPE),
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_DEFAULT_MAX_LENGTH])
+                ),
             ),
             $this->getValidationDecorator()->notRequiredParamRule(
                 new ParamRule(
@@ -212,22 +305,36 @@ class EmployeeImmigrationRecordAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/pim/employees/{empNumber}/immigrations",
+     *     tags={"PIM/Employee Immigration"},
+     *     summary="Delete an Employee's Immigration Records",
+     *     operationId="delete-an-employees-immigration-records",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     * )
+     *
      * @inheritDoc
      */
     public function delete(): EndpointResourceResult
     {
-        $recordId = $this->getRequestParams()->getArray(
-            RequestParams::PARAM_TYPE_BODY,
-            CommonParams::PARAMETER_IDS
-        );
         $empNumber = $this->getRequestParams()->getInt(
             RequestParams::PARAM_TYPE_ATTRIBUTE,
             CommonParams::PARAMETER_EMP_NUMBER
         );
-        $this->getEmployeeImmigrationRecordService()->deleteEmployeeImmigrationRecords($empNumber, $recordId);
+        $ids = $this->getEmployeeImmigrationRecordService()->getEmployeeImmigrationRecordDao()->getExistingEmployeeImmigrationIdsForEmpNumber(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS),
+            $empNumber
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
+        $this->getEmployeeImmigrationRecordService()->deleteEmployeeImmigrationRecords($empNumber, $ids);
         return new EndpointResourceResult(
             ArrayModel::class,
-            $recordId,
+            $ids,
             new ParameterBag([CommonParams::PARAMETER_EMP_NUMBER => $empNumber])
         );
     }
@@ -250,8 +357,37 @@ class EmployeeImmigrationRecordAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/immigrations/{id}",
+     *     tags={"PIM/Employee Immigration"},
+     *     summary="Get an Employee's Immigration Record",
+     *     operationId="get-an-employees-immigration-record",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeImmigrationModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
-     * @throws DaoException
      * @throws RecordNotFoundException
      */
     public function getOne(): EndpointResourceResult
@@ -292,8 +428,64 @@ class EmployeeImmigrationRecordAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/immigrations/{id}",
+     *     tags={"PIM/Employee Immigration"},
+     *     summary="Update an Employee's Immigration Record",
+     *     operationId="update-an-employees-immigration-record",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="number",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeImmigrationRecordAPI::PARAM_RULE_DEFAULT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="issuedDate", type="string", format="date"),
+     *             @OA\Property(property="expiryDate", type="string", format="date"),
+     *             @OA\Property(property="type", type="integer"),
+     *             @OA\Property(
+     *                 property="status",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeImmigrationRecordAPI::PARAM_RULE_DEFAULT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="reviewDate", type="string", format="date"),
+     *             @OA\Property(
+     *                 property="countryCode",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeImmigrationRecordAPI::PARAM_RULE_COUNTRY_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="comment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeImmigrationRecordAPI::PARAM_RULE_COMMENT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="additionalProperties", type="boolean", default=true),
+     *             required={"name", "type"}
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeImmigrationModel"
+     *             ),
+     *             @OA\Property(property="empNumber", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
-     * @throws DaoException
      */
     public function update(): EndpointResourceResult
     {
@@ -327,7 +519,6 @@ class EmployeeImmigrationRecordAPI extends Endpoint implements CrudEndpoint
 
     /**
      * @return EmployeeImmigrationRecord
-     * @throws DaoException
      * @throws RecordNotFoundException
      */
     public function saveEmployeeEmergencyImmigrations(): EmployeeImmigrationRecord

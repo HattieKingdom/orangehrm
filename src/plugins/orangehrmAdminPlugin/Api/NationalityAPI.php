@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -28,7 +27,6 @@ use OrangeHRM\Core\Api\V2\CrudEndpoint;
 use OrangeHRM\Core\Api\V2\Endpoint;
 use OrangeHRM\Core\Api\V2\EndpointCollectionResult;
 use OrangeHRM\Core\Api\V2\EndpointResourceResult;
-use OrangeHRM\Core\Api\V2\Exception\RecordNotFoundException;
 use OrangeHRM\Core\Api\V2\Model\ArrayModel;
 use OrangeHRM\Core\Api\V2\ParameterBag;
 use OrangeHRM\Core\Api\V2\RequestParams;
@@ -36,7 +34,7 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
+use OrangeHRM\Core\Api\V2\Validator\Rules\EntityUniquePropertyOption;
 use OrangeHRM\Entity\Nationality;
 
 class NationalityAPI extends EndPoint implements CrudEndpoint
@@ -64,6 +62,8 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/nationalities/{id}",
      *     tags={"Admin/Nationality"},
+     *     summary="Get a Nationality",
+     *     operationId="get-a-nationality",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -109,6 +109,8 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/nationalities",
      *     tags={"Admin/Nationality"},
+     *     summary="List All Nationalities",
+     *     operationId="list-all-nationalities",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -165,11 +167,12 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/nationalities",
      *     tags={"Admin/Nationality"},
+     *     summary="Create a Nationality",
+     *     operationId="create-a-nationality",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="id", type="integer"),
-     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\NationalityAPI::PARAM_RULE_NAME_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),
@@ -190,25 +193,18 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      */
     public function create(): EndpointResourceResult
     {
-        $nationality = $this->saveNationality();
+        $nationality = new Nationality();
+        $nationality = $this->saveNationality($nationality);
         return new EndpointResourceResult(NationalityModel::class, $nationality);
     }
 
     /**
+     * @param Nationality $nationality
      * @return Nationality
-     * @throws DaoException
-     * @throws RecordNotFoundException
      */
-    public function saveNationality(): Nationality
+    public function saveNationality(Nationality $nationality): Nationality
     {
-        $id = $this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_ATTRIBUTE, CommonParams::PARAMETER_ID);
         $name = $this->getRequestParams()->getString(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_NAME);
-        if ($id) {
-            $nationality = $this->getNationalityService()->getNationalityById($id);
-            $this->throwRecordNotFoundExceptionIfNotExist($nationality, Nationality::class);
-        } else {
-            $nationality = new Nationality();
-        }
         $nationality->setName($name);
         return $this->getNationalityService()->saveNationality($nationality);
     }
@@ -219,11 +215,7 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
     public function getValidationRuleForCreate(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+            $this->getNameRule()
         );
     }
 
@@ -231,6 +223,8 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/nationalities/{id}",
      *     tags={"Admin/Nationality"},
+     *     summary="Update a Nationality",
+     *     operationId="update-a-nationality",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -238,7 +232,7 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\NationalityAPI::PARAM_RULE_NAME_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),
@@ -260,7 +254,9 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      */
     public function update(): EndpointResourceResult
     {
-        $nationalities = $this->saveNationality();
+        $nationality = $this->getNationalityService()->getNationalityById($this->getAttributeId());
+        $this->throwRecordNotFoundExceptionIfNotExist($nationality, Nationality::class);
+        $nationalities = $this->saveNationality($nationality);
         return new EndpointResourceResult(NationalityModel::class, $nationalities);
     }
 
@@ -269,31 +265,31 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         return new ParamRuleCollection(
             new ParamRule(
                 CommonParams::PARAMETER_ID,
                 new Rule(Rules::POSITIVE)
             ),
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+            $this->getNameRule($uniqueOption)
         );
     }
 
     /**
-     * @return ParamRuleCollection
+     * @param EntityUniquePropertyOption|null $uniqueOption
+     * @return ParamRule
      */
-    public function getValidationRuleForSaveNationality(): ParamRuleCollection
+    private function getNameRule(?EntityUniquePropertyOption $uniqueOption = null): ParamRule
     {
-        return new ParamRuleCollection(
-            new ParamRule(CommonParams::PARAMETER_ID),
+        return $this->getValidationDecorator()->requiredParamRule(
             new ParamRule(
                 self::PARAMETER_NAME,
                 new Rule(Rules::STRING_TYPE),
                 new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+                new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [Nationality::class, 'name', $uniqueOption])
+            )
         );
     }
 
@@ -301,15 +297,21 @@ class NationalityAPI extends EndPoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/admin/nationalities",
      *     tags={"Admin/Nationality"},
+     *     summary="Delete Nationalities",
+     *     operationId="delete-nationalities",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResourceResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getNationalityService()->getNationalityDao()->getExistingNationalityIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getNationalityService()->deleteNationalities($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }

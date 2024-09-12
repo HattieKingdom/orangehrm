@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -28,9 +27,7 @@
               <employee-autocomplete
                 v-model="filters.employee"
                 :rules="rules.employee"
-                :params="{
-                  includeEmployees: filters.includeEmployees?.param,
-                }"
+                :params="{includeEmployees: filters.includeEmployees?.param}"
               />
             </oxd-grid-item>
             <oxd-grid-item>
@@ -138,7 +135,10 @@ import SubunitDropdown from '@/orangehrmPimPlugin/components/SubunitDropdown';
 import EmploymentStatusDropdown from '@/orangehrmPimPlugin/components/EmploymentStatusDropdown';
 import IncludeEmployeeDropdown from '@/core/components/dropdown/IncludeEmployeeDropdown';
 import useSort from '@ohrm/core/util/composable/useSort';
-import {validSelection} from '@/core/util/validation/rules';
+import {
+  shouldNotExceedCharLength,
+  validSelection,
+} from '@/core/util/validation/rules';
 import usei18n from '@/core/util/composable/usei18n';
 
 const defaultSortOrder = {
@@ -275,8 +275,8 @@ export default {
     return {
       checkedItems: [],
       rules: {
-        employee: [],
-        supervisor: [validSelection],
+        employee: [shouldNotExceedCharLength(100)],
+        supervisor: [shouldNotExceedCharLength(100), validSelection],
       },
     };
   },
@@ -332,23 +332,7 @@ export default {
           title: this.$t('general.actions'),
           style: {flex: 1},
           cellType: 'oxd-table-cell-actions',
-          cellConfig: {
-            ...(this.$can.delete('employee_list') && {
-              delete: {
-                onClick: this.onClickDelete,
-                component: 'oxd-icon-button',
-                props: {
-                  name: 'trash',
-                },
-              },
-            }),
-            edit: {
-              onClick: this.onClickEdit,
-              props: {
-                name: 'pencil-fill',
-              },
-            },
-          },
+          cellRenderer: this.cellRenderer,
         },
       ];
     },
@@ -408,6 +392,37 @@ export default {
     },
     async filterItems() {
       await this.execQuery();
+    },
+    cellRenderer(...[, , , row]) {
+      const cellConfig = {
+        edit: {
+          onClick: this.onClickEdit,
+          props: {
+            name: 'pencil-fill',
+          },
+        },
+      };
+
+      if (
+        this.$can.delete('employee_list') &&
+        !this.unselectableEmpNumbers.includes(row.id)
+      ) {
+        cellConfig.delete = {
+          onClick: this.onClickDelete,
+          component: 'oxd-icon-button',
+          props: {
+            name: 'trash',
+          },
+        };
+      }
+
+      return {
+        props: {
+          header: {
+            cellConfig,
+          },
+        },
+      };
     },
   },
 };

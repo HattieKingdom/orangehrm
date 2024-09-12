@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 <template>
@@ -140,6 +139,7 @@ import EmployeeAutocomplete from '@/core/components/inputs/EmployeeAutocomplete'
 import JobtitleDropdown from '@/orangehrmPimPlugin/components/JobtitleDropdown';
 import VacancyLinkCard from '../components/VacancyLinkCard.vue';
 import {OxdSwitchInput} from '@ohrm/oxd';
+import useServerValidation from '@/core/util/composable/useServerValidation';
 
 const vacancyModel = {
   jobTitle: null,
@@ -166,8 +166,14 @@ export default {
       window.appGlobal.baseUrl,
       '/api/v2/recruitment/vacancies',
     );
+    const {createUniqueValidator} = useServerValidation(http);
+    const vacancyNameUniqueValidation = createUniqueValidator(
+      'Vacancy',
+      'name',
+    );
     return {
       http,
+      vacancyNameUniqueValidation,
     };
   },
   data() {
@@ -176,7 +182,11 @@ export default {
       vacancy: {...vacancyModel},
       rules: {
         jobTitle: [required],
-        name: [required, shouldNotExceedCharLength(50)],
+        name: [
+          required,
+          this.vacancyNameUniqueValidation,
+          shouldNotExceedCharLength(50),
+        ],
         hiringManager: [required, validSelection],
         numOfPositions: [
           (value) => {
@@ -193,21 +203,6 @@ export default {
       rssFeedUrl: `${basePath}/recruitmentApply/jobs.rss`,
       webUrl: `${basePath}/recruitmentApply/jobs.html`,
     };
-  },
-  created() {
-    this.isLoading = true;
-    this.http
-      .getAll({limit: 0})
-      .then((response) => {
-        const {data} = response.data;
-        this.rules.name.push((v) => {
-          const index = data.findIndex((item) => item.name == v);
-          return index === -1 || this.$t('general.already_exists');
-        });
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
   },
   methods: {
     onCancel() {

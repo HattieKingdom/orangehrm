@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Api;
@@ -133,8 +132,10 @@ class LeaveBalanceAPI extends Endpoint implements ResourceEndpoint
      * @OA\Get(
      *     path="/api/v2/leave/leave-balance/leave-type/{leaveTypeId}",
      *     tags={"Leave/Leave Balance"},
+     *     summary="Get Leave Balance for a Leave Type",
+     *     operationId="get-leave-balance-for-a-leave-type",
      *     @OA\PathParameter(
-     *         name="id",
+     *         name="leaveTypeId",
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
@@ -155,9 +156,9 @@ class LeaveBalanceAPI extends Endpoint implements ResourceEndpoint
      *                     @OA\Property(
      *                         property="balance",
      *                         type="object",
-     *                         @OA\Property(property="asAtDate", type="number", example="2022-10-01"),
+     *                         @OA\Property(property="asAtDate", type="string", format="date"),
      *                         @OA\Property(property="balance", type="integer"),
-     *                         @OA\Property(property="endDate", type="number", example="2022-12-31"),
+     *                         @OA\Property(property="endDate", type="string", format="date"),
      *                         @OA\Property(property="entitled", type="integer"),
      *                         @OA\Property(property="pending", type="integer"),
      *                         @OA\Property(property="scheduled", type="integer"),

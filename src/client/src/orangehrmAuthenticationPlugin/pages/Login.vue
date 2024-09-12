@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -85,7 +84,10 @@
           </oxd-text>
         </div>
       </oxd-form>
-      <br />
+      <template v-if="authenticators.length > 0">
+        <oxd-divider class="orangehrm-login-seperator"></oxd-divider>
+        <social-media-auth :authenticators="authenticators"></social-media-auth>
+      </template>
     </div>
     <div class="orangehrm-login-footer">
       <div v-if="showSocialMedia" class="orangehrm-login-footer-sm">
@@ -112,10 +114,11 @@
 
 <script>
 import {urlFor} from '@ohrm/core/util/helper/url';
+import {OxdAlert, OxdIcon, OxdSheet} from '@ohrm/oxd';
 import {required} from '@ohrm/core/util/validation/rules';
 import {navigate, reloadPage} from '@ohrm/core/util/helper/navigation';
-import LoginLayout from '../components/LoginLayout';
-import {OxdAlert, OxdIcon, OxdSheet} from '@ohrm/oxd';
+import LoginLayout from '@/orangehrmAuthenticationPlugin/components/LoginLayout.vue';
+import SocialMediaAuth from '@/orangehrmAuthenticationPlugin/components/SocialMediaAuth.vue';
 
 export default {
   components: {
@@ -123,6 +126,7 @@ export default {
     'oxd-alert': OxdAlert,
     'oxd-sheet': OxdSheet,
     'login-layout': LoginLayout,
+    'social-media-auth': SocialMediaAuth,
   },
 
   props: {
@@ -141,6 +145,10 @@ export default {
     isDemoMode: {
       type: Boolean,
       default: false,
+    },
+    authenticators: {
+      type: Array,
+      default: () => [],
     },
   },
 

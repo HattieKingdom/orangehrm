@@ -4,23 +4,20 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Core\Dao;
 
-use Exception;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Core\Traits\LoggerTrait;
 use OrangeHRM\Entity\Config;
 
@@ -32,25 +29,18 @@ class ConfigDao extends BaseDao
      * Set $key to given $value
      * @param string $name Key
      * @param string $value Value
-     * @throws DaoException
      */
     public function setValue(string $name, string $value): Config
     {
-        try {
-            $config = $this->getRepository(Config::class)->find($name);
+        $config = $this->getRepository(Config::class)->find($name);
 
-            if (!$config instanceof Config) {
-                $config = new Config();
-            }
-            $config->setName($name);
-            $config->setValue($value);
-            $this->persist($config);
-            return $config;
-        } catch (Exception $e) {
-            $this->getLogger()->error($e->getMessage());
-            $this->getLogger()->error($e->getTraceAsString());
-            throw new DaoException($e->getMessage(), $e->getCode(), $e);
+        if (!$config instanceof Config) {
+            $config = new Config();
         }
+        $config->setName($name);
+        $config->setValue($value);
+        $this->persist($config);
+        return $config;
     }
 
     /**
@@ -60,34 +50,23 @@ class ConfigDao extends BaseDao
      */
     public function getValue(string $name): ?string
     {
-        try {
-            $config = $this->getRepository(Config::class)->find($name);
-            if ($config instanceof Config) {
-                return $config->getValue();
-            }
-            return null;
-        } catch (Exception $e) {
-            $this->getLogger()->error($e->getMessage());
-            $this->getLogger()->error($e->getTraceAsString());
-            throw new DaoException($e->getMessage(), $e->getCode(), $e);
+        $config = $this->getRepository(Config::class)->find($name);
+        if ($config instanceof Config) {
+            return $config->getValue();
         }
+        return null;
     }
 
     /**
      * @return array
-     * @throws DaoException
      */
     public function getAllValues(): array
     {
-        try {
-            $values = [];
-            $configs = $this->getRepository(Config::class)->findAll();
-            foreach ($configs as $config) {
-                $values[$config->getName()] = $config->getValue();
-            }
-            return $values;
-        } catch (Exception $e) {
-            throw new DaoException($e->getMessage(), $e->getCode(), $e);
+        $values = [];
+        $configs = $this->getRepository(Config::class)->findAll();
+        foreach ($configs as $config) {
+            $values[$config->getName()] = $config->getValue();
         }
+        return $values;
     }
 }

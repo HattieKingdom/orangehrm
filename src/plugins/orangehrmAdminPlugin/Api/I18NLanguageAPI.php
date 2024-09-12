@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -36,6 +35,7 @@ use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
 use OrangeHRM\Core\Traits\Service\DateTimeHelperTrait;
 use OrangeHRM\Entity\I18NLanguage;
+use OrangeHRM\Core\Api\V2\Model\ArrayModel;
 
 class I18NLanguageAPI extends Endpoint implements CrudEndpoint
 {
@@ -48,6 +48,8 @@ class I18NLanguageAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/i18n/languages",
      *     tags={"Admin/I18N"},
+     *     summary="List All I18N Languages",
+     *     operationId="list-all-i18n-languages",
      *     @OA\Parameter(
      *         name="activeOnly",
      *         in="query",
@@ -137,11 +139,26 @@ class I18NLanguageAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/admin/i18n/languages",
+     *     tags={"Admin/I18N"},
+     *     summary="Delete an I18N Language",
+     *     operationId="delete-an-i18n-language",
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        throw $this->getNotImplementedException();
+        $ids = $this->getLocalizationService()->getLocalizationDao()->getExistingLanguageIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
+        $this->getLocalizationService()->getLocalizationDao()->deleteI18NLanguage($ids);
+        return new EndpointResourceResult(ArrayModel::class, $ids);
     }
 
     /**
@@ -149,15 +166,46 @@ class I18NLanguageAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForDelete(): ParamRuleCollection
     {
-        throw $this->getNotImplementedException();
+        return new ParamRuleCollection(
+            new ParamRule(
+                CommonParams::PARAMETER_IDS,
+                new Rule(Rules::INT_ARRAY)
+            ),
+        );
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/admin/i18n/languages/{id}",
+     *     tags={"Admin/I18N"},
+     *     summary="Get an I18N Language",
+     *     operationId="get-an-i18n-language",
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Admin-I18NLanguageModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResult
     {
-        throw $this->getNotImplementedException();
+        $id = $this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_ATTRIBUTE, CommonParams::PARAMETER_ID);
+        $language = $this->getLocalizationService()->getLocalizationDao()->getLanguageById($id);
+        $this->throwRecordNotFoundExceptionIfNotExist($language, I18NLanguage::class);
+
+        return new EndpointResourceResult(I18NLanguageModel::class, $language);
     }
 
     /**
@@ -165,13 +213,20 @@ class I18NLanguageAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForGetOne(): ParamRuleCollection
     {
-        throw $this->getNotImplementedException();
+        return new ParamRuleCollection(
+            new ParamRule(
+                CommonParams::PARAMETER_ID,
+                new Rule(Rules::POSITIVE)
+            ),
+        );
     }
 
     /**
      * @OA\Put(
      *     path="/api/v2/admin/i18n/languages/{id}",
      *     tags={"Admin/I18N"},
+     *     summary="Update an I18N Language",
+     *     operationId="update-an-i18n-language",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")

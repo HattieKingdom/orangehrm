@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -30,7 +29,6 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\EmpWorkExperience;
 use OrangeHRM\Pim\Api\Model\EmployeeWorkExperienceModel;
 use OrangeHRM\Pim\Dto\EmployeeWorkExperienceSearchFilterParams;
@@ -67,6 +65,34 @@ class EmployeeWorkExperienceAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/work-experiences/{id}",
+     *     tags={"PIM/Employee Work Experience"},
+     *     summary="Get an Employee's Work Experience Record",
+     *     operationId="get-an-employees-work-experience-record",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeWorkExperienceModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", type="integer")
+     *             )
+     *         )
+     *     ),
+     * )
      * @inheritDoc
      */
     public function getOne(): EndpointResourceResult
@@ -107,8 +133,42 @@ class EmployeeWorkExperienceAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
-     * @return EndpointGetAllResult
-     * @throws Exception
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/work-experiences",
+     *     tags={"PIM/Employee Work Experience"},
+     *     summary="List Employee's Work Experience Records",
+     *     operationId="list-employees-work-experience-records",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=EmployeeWorkExperienceSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeWorkExperienceModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="empNumber", type="integer")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
+     * @inheritDoc
      */
     public function getAll(): EndpointCollectionResult
     {
@@ -153,8 +213,52 @@ class EmployeeWorkExperienceAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/pim/employees/{empNumber}/work-experiences",
+     *     tags={"PIM/Employee Work Experience"},
+     *     summary="Add a Work Experience Record to an Employee",
+     *     operationId="add-a-work-experience-record-to-an-employee",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="company",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeWorkExperienceAPI::PARAM_RULE_EMPLOYER_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="jobTitle",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeWorkExperienceAPI::PARAM_RULE_JOB_TITLE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="fromDate", type="string", format="date"),
+     *             @OA\Property(property="toDate", type="string", format="date"),
+     *             @OA\Property(
+     *                 property="comment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeWorkExperienceAPI::PARAM_RULE_COMMENTS_MAX_LENGTH
+     *             ),
+     *             required={"jobTitle", "company"}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeWorkExperienceModel"
+     *             ),
+     *             @OA\Property(property="empNumber", type="integer")
+     *         )
+     *     )
+     * )
+     *
      * @inheritDoc
-     * @throws Exception
      */
     public function create(): EndpointResourceResult
     {
@@ -187,17 +291,19 @@ class EmployeeWorkExperienceAPI extends Endpoint implements CrudEndpoint
     private function getCommonBodyValidationRules(): array
     {
         return [
-            new ParamRule(
-                self::PARAMETER_EMPLOYER,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::REQUIRED),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_EMPLOYER_MAX_LENGTH]),
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_EMPLOYER,
+                    new Rule(Rules::STRING_TYPE),
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_EMPLOYER_MAX_LENGTH]),
+                )
             ),
-            new ParamRule(
-                self::PARAMETER_JOB_TITLE,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::REQUIRED),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_JOB_TITLE_MAX_LENGTH]),
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_JOB_TITLE,
+                    new Rule(Rules::STRING_TYPE),
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_JOB_TITLE_MAX_LENGTH]),
+                )
             ),
             $this->getValidationDecorator()->notRequiredParamRule(
                 new ParamRule(
@@ -217,14 +323,65 @@ class EmployeeWorkExperienceAPI extends Endpoint implements CrudEndpoint
                 new ParamRule(
                     self::PARAMETER_TO_DATE,
                     new Rule(Rules::API_DATE),
+                    new Rule(
+                        Rules::GREATER_THAN,
+                        [$this->getRequestParams()->getDateTimeOrNull(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_FROM_DATE)]
+                    )
                 ),
             ),
         ];
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/work-experiences/{id}",
+     *     tags={"PIM/Employee Work Experience"},
+     *     summary="Update an Employee's Work Experiece Record",
+     *     operationId="update-an-employees-work-experience-record",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="company",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeWorkExperienceAPI::PARAM_RULE_EMPLOYER_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="jobTitle",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeWorkExperienceAPI::PARAM_RULE_JOB_TITLE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="fromDate", type="string", format="date"),
+     *             @OA\Property(property="toDate", type="string", format="date"),
+     *             @OA\Property(
+     *                 property="comment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeWorkExperienceAPI::PARAM_RULE_COMMENTS_MAX_LENGTH
+     *             ),
+     *             required={"jobTitle", "company"}
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeWorkExperienceModel"
+     *             ),
+     *             @OA\Property(property="empNumber", type="integer")
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
-     * @throws Exception
      */
     public function update(): EndpointResourceResult
     {
@@ -254,8 +411,21 @@ class EmployeeWorkExperienceAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/pim/employees/{empNumber}/work-experiences",
+     *     tags={"PIM/Employee Work Experience"},
+     *     summary="Delete an Employee's Work Experience Records",
+     *     operationId="delete-an-employees-work-experience-records",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
-     * @throws DaoException
      * @throws Exception
      */
     public function delete(): EndpointResourceResult
@@ -264,7 +434,11 @@ class EmployeeWorkExperienceAPI extends Endpoint implements CrudEndpoint
             RequestParams::PARAM_TYPE_ATTRIBUTE,
             CommonParams::PARAMETER_EMP_NUMBER
         );
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getEmployeeWorkExperienceService()->getEmployeeWorkExperienceDao()->getExistingEmpWorkExperienceIdsForEmpNumber(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS),
+            $empNumber
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getEmployeeWorkExperienceService()->getEmployeeWorkExperienceDao()->deleteEmployeeWorkExperiences($empNumber, $ids);
         return new EndpointResourceResult(
             ArrayModel::class,
@@ -293,7 +467,6 @@ class EmployeeWorkExperienceAPI extends Endpoint implements CrudEndpoint
 
     /**
      * @return EmpWorkExperience
-     * @throws DaoException
      * @throws Exception
      */
     public function saveEmployeeWorkExperience(): EmpWorkExperience

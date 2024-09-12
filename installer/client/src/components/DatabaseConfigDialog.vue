@@ -14,9 +14,9 @@
         class="orangehrm-database-config-dialog-content orangehrm-database-config--title"
       >
         The following features and add-ons are not supported in OrangeHRM
-        Starter version 5.5. You may continue to upgrade your system to version
-        5.5, but please note that any data used in these features will be
-        inaccessible.
+        Starter version {{ productVersion }}. You may continue to upgrade your
+        system to version {{ productVersion }}, but please note that any data
+        used in these features will be inaccessible.
       </oxd-text>
       <oxd-classic-table
         :headers="headers"
@@ -25,7 +25,7 @@
       ></oxd-classic-table>
       <oxd-check-box
         v-model="checked"
-        option-label="I want to continue upgrading the OrangeHRM system to version 5.5 and I am aware that by doing so, any gathered data in incomplete features/add-ons will be inaccessible."
+        :option-label="optionLabel"
       ></oxd-check-box>
       <oxd-divider class="orangehrm-divider" />
       <oxd-form-actions class="orangehrm-database-config-dialog-action">
@@ -48,34 +48,45 @@
 </template>
 
 <script>
-import DialogWithClose from '@ohrm/oxd/core/components/Dialog/Dialog.vue';
-import ClassicTable from '@ohrm/oxd/core/components/Table/ClassicTable.vue';
-import CheckBoxInput from '@ohrm/oxd/core/components/Input/CheckboxInput.vue';
+import {OxdCheckboxInput, OxdClassicTable, OxdDialog} from '@ohrm/oxd';
 
 export default {
   name: 'DatabaseConfigDialog',
   components: {
-    'oxd-dialog': DialogWithClose,
-    'oxd-check-box': CheckBoxInput,
-    'oxd-classic-table': ClassicTable,
+    'oxd-dialog': OxdDialog,
+    'oxd-check-box': OxdCheckboxInput,
+    'oxd-classic-table': OxdClassicTable,
+  },
+  props: {
+    productVersion: {
+      type: String,
+      required: true,
+    },
   },
   emits: ['closeModel'],
   data() {
     return {
       checked: false,
       headers: [
-        {title: 'Features', name: 'feat'},
         {title: 'Add-ons', name: 'addon'},
         {title: 'Other', name: 'other'},
       ],
       items: [
         {
-          feat: '- Social Media Authentication',
           addon: '- Toggl (Discontinued)',
           other: '- Marketplace (Discontinued)',
         },
       ],
     };
+  },
+  computed: {
+    optionLabel() {
+      return (
+        'I want to continue upgrading the OrangeHRM system to version ' +
+        this.productVersion +
+        ' and I am aware that by doing so, any gathered data in incomplete features/add-ons will be inaccessible.'
+      );
+    },
   },
   methods: {
     submitInfo() {
@@ -120,6 +131,7 @@ export default {
   }
   &-table {
     margin-bottom: 2em;
+    display: table;
     table-layout: fixed;
   }
 }

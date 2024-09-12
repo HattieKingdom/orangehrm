@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\OAuth\Api;
@@ -57,6 +56,8 @@ class OAuthClientAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/oauth-clients",
      *     tags={"OAuth/OAuth Clients"},
+     *     summary="List All OAuth Clients",
+     *     operationId="list-all-oauth-clients",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -115,6 +116,8 @@ class OAuthClientAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/oauth-clients",
      *     tags={"OAuth/OAuth Clients"},
+     *     summary="Create an OAuth Client",
+     *     operationId="create-an-oauth-client",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
@@ -164,23 +167,24 @@ class OAuthClientAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForCreate(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::REQUIRED),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-                new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [OAuthClient::class, 'name'])
-            ),
             ...$this->getCommonBodyValidationRules(),
         );
     }
 
     /**
+     * @param EntityUniquePropertyOption|null $uniqueOption
      * @return ParamRule[]
      */
-    private function getCommonBodyValidationRules(): array
+    private function getCommonBodyValidationRules(?EntityUniquePropertyOption $uniqueOption = null): array
     {
         return [
+            new ParamRule(
+                self::PARAMETER_NAME,
+                new Rule(Rules::STRING_TYPE),
+                new Rule(Rules::REQUIRED),
+                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
+                new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [OAuthClient::class, 'name', $uniqueOption])
+            ),
             new ParamRule(
                 self::PARAMETER_REDIRECT_URI,
                 new Rule(Rules::STRING_TYPE),
@@ -201,6 +205,8 @@ class OAuthClientAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/admin/oauth-clients",
      *     tags={"OAuth/OAuth Clients"},
+     *     summary="Delete OAuth Clients",
+     *     operationId="delete-oauth-clients",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
      *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
      * )
@@ -240,6 +246,8 @@ class OAuthClientAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/oauth-client/{id}",
      *     tags={"OAuth/OAuth Clients"},
+     *     summary="Get an OAuth Client",
+     *     operationId="get-an-oauth-client",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -289,6 +297,8 @@ class OAuthClientAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/oauth-client/{id}",
      *     tags={"OAuth/OAuth Clients"},
+     *     summary="Update an OAuth Client",
+     *     operationId="update-an-oauth-client",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -356,13 +366,9 @@ class OAuthClientAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
-        $entityUniquePropertyOptions = new EntityUniquePropertyOption();
-        $entityUniquePropertyOptions->setIgnoreValues(
-            ['getId' => $this->getRequestParams()->getInt(
-                RequestParams::PARAM_TYPE_ATTRIBUTE,
-                CommonParams::PARAMETER_ID
-            )]
-        );
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         $mobileClientId = $this->getOAuthService()->getMobileClientId();
 
         return new ParamRuleCollection(
@@ -371,14 +377,7 @@ class OAuthClientAPI extends Endpoint implements CrudEndpoint
                 new Rule(Rules::POSITIVE),
                 new Rule(Rules::NOT_IN, [[$mobileClientId]])
             ),
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::REQUIRED),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-                new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [OAuthClient::class, 'name', $entityUniquePropertyOptions])
-            ),
-            ...$this->getCommonBodyValidationRules(),
+            ...$this->getCommonBodyValidationRules($uniqueOption),
         );
     }
 

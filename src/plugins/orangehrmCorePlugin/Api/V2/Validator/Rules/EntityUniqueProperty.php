@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Core\Api\V2\Validator\Rules;
@@ -57,32 +56,37 @@ class EntityUniqueProperty extends AbstractRule
             $input = $this->option->getTrimFunction()(($input));
         }
 
-        $entityList = $this->getRepository($this->entityName)->findBy([$this->property => $input]);
+        $qb = $this->createQueryBuilder($this->entityName, 'entity');
+
+        $qb->andWhere($qb->expr()->eq('entity.' . $this->property, ':input'))
+            ->setParameter('input', $input);
+
+        // Match all entities that have these values
+        if ($this->option->hasMatchValues()) {
+            foreach ($this->option->getMatchValues() as $property => $value) {
+                if (is_null($value)) {
+                    $qb->andWhere($qb->expr()->isNull('entity.' . $property));
+                } else {
+                    $qb->andWhere($qb->expr()->eq('entity.' . $property, ':' . $property . '_value'))
+                        ->setParameter($property . '_value', $value);
+                }
+            }
+        }
+
+        // Match all entities that DON'T have these values
+        if ($this->option->hasIgnoreValues()) {
+            foreach ($this->option->getIgnoreValues() as $property => $value) {
+                $qb->andWhere($qb->expr()->neq('entity.' . $property, ':' . $property . '_value'))
+                    ->setParameter($property . '_value', $value);
+            }
+        }
+
+        $entityList = $qb->getQuery()->execute();
 
         if (empty($entityList)) {
             return true;
         }
 
-        return $this->option->hasIgnoreValues() && $this->entitiesHaveIgnoreValues($entityList);
-    }
-
-    /**
-     * @param array $entities
-     * @return bool
-     */
-    private function entitiesHaveIgnoreValues(array $entities): bool
-    {
-        $lastGetter = array_key_last($this->option->getIgnoreValues());
-        foreach ($entities as $entity) {
-            foreach ($this->option->getIgnoreValues() as $getter => $value) {
-                if ($entity->$getter() === $value) {
-                    break; //if entity has ignored value, skip to next entity
-                }
-                if ($getter === $lastGetter) {
-                    return false; //if this point reached, entity has no ignored values
-                }
-            }
-        }
-        return true; //all entities have ignored values
+        return false;
     }
 }

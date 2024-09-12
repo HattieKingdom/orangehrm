@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Authentication\Service;
@@ -56,13 +55,13 @@ class PasswordStrengthService
 
     protected ?EnforcePasswordDao $enforcePasswordDao = null;
 
-    private int $minLength;
-    private int $maxLength;
-    private int $minNoOfLowercaseLetters;
-    private int $minNoOfUppercaseLetters;
-    private int $minNoOfNumbers;
-    private int $minNoOfSpecialCharacters;
-    private string $isSpacesAllowed;
+    protected int $minLength;
+    protected int $maxLength;
+    protected int $minNoOfLowercaseLetters;
+    protected int $minNoOfUppercaseLetters;
+    protected int $minNoOfNumbers;
+    protected int $minNoOfSpecialCharacters;
+    protected string $isSpacesAllowed;
     private string $defaultPasswordStrength;
 
     /**
@@ -76,7 +75,7 @@ class PasswordStrengthService
     /**
      * @return int
      */
-    private function getMinLength(): int
+    protected function getMinLength(): int
     {
         return $this->minLength ??= $this->getConfigService()->getConfigDao()->getValue(
             ConfigService::KEY_MIN_PASSWORD_LENGTH
@@ -86,7 +85,7 @@ class PasswordStrengthService
     /**
      * @return int
      */
-    private function getMaxLength(): int
+    protected function getMaxLength(): int
     {
         return $this->maxLength ??= ConfigService::MAX_PASSWORD_LENGTH;
     }
@@ -94,7 +93,7 @@ class PasswordStrengthService
     /**
      * @return int
      */
-    private function getMinNoOfLowercaseLetters(): int
+    protected function getMinNoOfLowercaseLetters(): int
     {
         return $this->minNoOfLowercaseLetters ??= $this->getConfigService()->getConfigDao()->getValue(
             ConfigService::KEY_MIN_LOWERCASE_LETTERS
@@ -104,7 +103,7 @@ class PasswordStrengthService
     /**
      * @return int
      */
-    private function getMinNoOfUppercaseLetters(): int
+    protected function getMinNoOfUppercaseLetters(): int
     {
         return $this->minNoOfUppercaseLetters ??= $this->getConfigService()->getConfigDao()->getValue(
             ConfigService::KEY_MIN_UPPERCASE_LETTERS
@@ -114,7 +113,7 @@ class PasswordStrengthService
     /**
      * @return int
      */
-    private function getMinNoOfNumbers(): int
+    protected function getMinNoOfNumbers(): int
     {
         return $this->minNoOfNumbers ??= $this->getConfigService()->getConfigDao()->getValue(
             ConfigService::KEY_MIN_NUMBERS_IN_PASSWORD
@@ -124,7 +123,7 @@ class PasswordStrengthService
     /**
      * @return int
      */
-    private function getMinNoOfSpecialCharacters(): int
+    protected function getMinNoOfSpecialCharacters(): int
     {
         return $this->minNoOfSpecialCharacters ??= $this->getConfigService()->getConfigDao()->getValue(
             ConfigService::KEY_MIN_SPECIAL_CHARACTERS
@@ -134,7 +133,7 @@ class PasswordStrengthService
     /**
      * @return string
      */
-    private function getIsSpacesAllowed(): string
+    protected function getIsSpacesAllowed(): string
     {
         return $this->isSpacesAllowed ??= $this->getConfigService()->getConfigDao()->getValue(
             ConfigService::KEY_IS_SPACES_ALLOWED
@@ -144,7 +143,7 @@ class PasswordStrengthService
     /**
      * @return string
      */
-    private function getDefaultPasswordStrength(): string
+    protected function getDefaultPasswordStrength(): string
     {
         return $this->defaultPasswordStrength ??= $this->getConfigService()->getConfigDao()->getValue(
             ConfigService::KEY_DEFAULT_PASSWORD_STRENGTH
@@ -155,7 +154,7 @@ class PasswordStrengthService
      * @param string $password
      * @return bool
      */
-    private function checkMinPasswordLength(string $password): bool
+    protected function checkMinPasswordLength(string $password): bool
     {
         $minLength = $this->getMinLength();
 
@@ -169,7 +168,7 @@ class PasswordStrengthService
      * @param string $password
      * @return bool
      */
-    private function checkMaxPasswordLength(string $password): bool
+    protected function checkMaxPasswordLength(string $password): bool
     {
         $maxLength = $this->getMaxLength();
 
@@ -184,7 +183,7 @@ class PasswordStrengthService
      * @param string $password
      * @return bool
      */
-    private function checkMinLowercaseLetters(string $password): bool
+    protected function checkMinLowercaseLetters(string $password): bool
     {
         $minNoOfLowercaseLetters = $this->getMinNoOfLowercaseLetters();
 
@@ -199,7 +198,7 @@ class PasswordStrengthService
      * @param string $password
      * @return bool
      */
-    private function checkMinUppercaseLetters(string $password): bool
+    protected function checkMinUppercaseLetters(string $password): bool
     {
         $minNoOfUppercaseLetters = $this->getMinNoOfUppercaseLetters();
         $noOfUppercaseLetters = preg_match_all(self::UPPERCASE_REGEX, $password);
@@ -213,7 +212,7 @@ class PasswordStrengthService
      * @param string $password
      * @return bool
      */
-    private function checkMinNumbersInPassword(string $password): bool
+    protected function checkMinNumbersInPassword(string $password): bool
     {
         $minNoOfNumbers = $this->getMinNoOfNumbers();
         $noOfNumbers = preg_match_all(self::NUMBER_REGEX, $password);
@@ -227,7 +226,7 @@ class PasswordStrengthService
      * @param string $password
      * @return bool
      */
-    private function checkMinSpecialCharacters(string $password): bool
+    protected function checkMinSpecialCharacters(string $password): bool
     {
         $minNoOfSpecialCharacters = $this->getMinNoOfSpecialCharacters();
         $noOfSpecialCharacters = preg_match_all(self::SPECIAL_CHARACTER_REGEX, $password);
@@ -241,7 +240,7 @@ class PasswordStrengthService
      * @param string $password
      * @return bool
      */
-    private function checkSpacesInPassword(string $password): bool
+    protected function checkSpacesInPassword(string $password): bool
     {
         $isSpacesAllowed = $this->getIsSpacesAllowed();
         return $isSpacesAllowed === 'false' && preg_match_all(self::SPACES_REGEX, $password) > 0;
@@ -251,7 +250,7 @@ class PasswordStrengthService
      * @param int $passwordStrength
      * @return bool
      */
-    private function checkRequiredDefaultPasswordStrength(int $passwordStrength): bool
+    protected function checkRequiredDefaultPasswordStrength(int $passwordStrength): bool
     {
         $defaultPasswordStrength = $this->getDefaultPasswordStrength();
         return (($defaultPasswordStrength === 'veryWeak' && $passwordStrength < 0)
@@ -362,7 +361,7 @@ class PasswordStrengthService
         $enforcedPasswordLog = $this->getEnforcePasswordDao()->getEnforcedPasswordLogByResetCode($resetCode);
         if ($enforcedPasswordLog instanceof EnforcePasswordRequest) {
             if ($enforcedPasswordLog->isExpired()) {
-                $this->getLogger()->warning('Enforce password reset code already used', ['resetCode'=>$resetCode]);
+                $this->getLogger()->warning('Enforce password reset code already used', ['resetCode' => $resetCode]);
                 return false;
             }
             if ($this->isResetCodeTimeOut($enforcedPasswordLog)) {
@@ -370,12 +369,12 @@ class PasswordStrengthService
                     $enforcedPasswordLog->getUser()->getId(),
                     true
                 );
-                $this->getLogger()->warning('Enforce password reset code expired', ['resetCode'=>$resetCode]);
+                $this->getLogger()->warning('Enforce password reset code expired', ['resetCode' => $resetCode]);
                 return false;
             }
             return true;
         }
-        $this->getLogger()->warning('Invalid reset code', ['resetCode'=>$resetCode]);
+        $this->getLogger()->warning('Invalid reset code', ['resetCode' => $resetCode]);
         return false;
     }
 
@@ -433,7 +432,7 @@ class PasswordStrengthService
                 $user->setDateModified($this->getDateTimeHelper()->getNow());
                 $user->setModifiedUserId($user->getId());
                 $this->getUserService()->saveSystemUser($user);
-                $success= $this->getEnforcePasswordDao()->updateEnforcedPasswordValid($user->getId(), true);
+                $success = $this->getEnforcePasswordDao()->updateEnforcedPasswordValid($user->getId(), true);
             }
             $this->commitTransaction();
             return $success;

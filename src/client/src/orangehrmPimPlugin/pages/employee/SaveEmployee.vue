@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -104,6 +103,7 @@
               <password-input
                 v-model:password="user.password"
                 v-model:passwordConfirm="user.passwordConfirm"
+                :is-password-required="isPasswordRequired"
               />
             </template>
           </div>
@@ -139,6 +139,7 @@ import {
   validFileTypes,
 } from '@ohrm/core/util/validation/rules';
 import {OxdSwitchInput} from '@ohrm/oxd';
+import useServerValidation from '@/core/util/composable/useServerValidation';
 
 const defaultPic = `${window.appGlobal.publicPath}/images/default-photo.png`;
 
@@ -176,6 +177,10 @@ export default {
       type: Array,
       required: true,
     },
+    isPasswordRequired: {
+      type: Boolean,
+      default: true,
+    },
   },
 
   setup(props) {
@@ -189,9 +194,23 @@ export default {
       '/api/v2/pim/employees',
     );
 
+    const {createUniqueValidator} = useServerValidation(http);
+    const employeeIdUniqueValidation = createUniqueValidator(
+      'Employee',
+      'employeeId',
+      {translateKey: 'pim.employee_id_exists'},
+    );
+    const usernameUniqueValidation = createUniqueValidator('User', 'userName', {
+      matchByField: 'deleted',
+      matchByValue: 'false',
+      translateKey: 'pim.username_already_exists',
+    });
+
     return {
       http,
       employee,
+      employeeIdUniqueValidation,
+      usernameUniqueValidation,
     };
   },
 
@@ -205,13 +224,17 @@ export default {
         firstName: [required, shouldNotExceedCharLength(30)],
         middleName: [shouldNotExceedCharLength(30)],
         lastName: [required, shouldNotExceedCharLength(30)],
-        employeeId: [shouldNotExceedCharLength(10)],
+        employeeId: [
+          this.employeeIdUniqueValidation,
+          shouldNotExceedCharLength(10),
+        ],
         empPicture: [
           maxFileSize(1024 * 1024),
           validFileTypes(this.allowedImageTypes),
         ],
         username: [
           required,
+          this.usernameUniqueValidation,
           shouldNotLessThanCharLength(5),
           shouldNotExceedCharLength(40),
         ],
@@ -237,44 +260,9 @@ export default {
 
   created() {
     this.isLoading = true;
-    this.http
-      .getAll()
-      .then((response) => {
-        const {data} = response.data;
-        this.rules.employeeId.push((v) => {
-          const index = data.findIndex(
-            (item) =>
-              item.employeeId?.trim() &&
-              String(item.employeeId).toLowerCase() == String(v).toLowerCase(),
-          );
-          if (index > -1) {
-            return this.$t('pim.employee_id_exists');
-          } else {
-            return true;
-          }
-        });
-        return this.http.request({
-          method: 'GET',
-          url: '/api/v2/admin/users',
-        });
-      })
-      .then((response) => {
-        const {data} = response.data;
-        this.rules.username.push((v) => {
-          const index = data.findIndex(
-            (item) =>
-              String(item.userName).toLowerCase() == String(v).toLowerCase(),
-          );
-          if (index > -1) {
-            return this.$t('pim.username_already_exists');
-          } else {
-            return true;
-          }
-        });
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
+    this.http.getAll().finally(() => {
+      this.isLoading = false;
+    });
   },
 
   methods: {

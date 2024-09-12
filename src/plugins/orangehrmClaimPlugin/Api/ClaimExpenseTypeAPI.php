@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Claim\Api;
@@ -56,7 +55,9 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Get(
      *     path="/api/v2/claim/expenses/types",
-     *     tags={"Claim/ExpenseTypes"},
+     *     tags={"Claim/Expense Types"},
+     *     summary="List All Expense Types",
+     *     operationId="list-all-expense-types",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -156,7 +157,9 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Post(
      *     path="/api/v2/claim/expenses/types",
-     *     tags={"Claim/ExpenseTypes"},
+     *     tags={"Claim/Expense Types"},
+     *     summary="Create an Expense Type",
+     *     operationId="create-an-expense-type",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
@@ -201,7 +204,7 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
     {
         return new ParamRuleCollection(
             $this->getValidationDecorator()->requiredParamRule(
-                $this->getNameRule(false),
+                $this->getNameRule($this->getClaimExpenseTypeCommonUniqueOption()),
             ),
             $this->getValidationDecorator()->notRequiredParamRule(
                 new ParamRule(
@@ -219,27 +222,27 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
-     * @param bool $update
+     * @param EntityUniquePropertyOption|null $uniqueOption
      * @return ParamRule
      */
-    protected function getNameRule(bool $update): ParamRule
+    protected function getNameRule(?EntityUniquePropertyOption $uniqueOption = null): ParamRule
     {
-        $entityProperties = new EntityUniquePropertyOption();
-        $ignoreValues = ['isDeleted' => true];
-        if ($update) {
-            $ignoreValues['getId'] = $this->getRequestParams()->getInt(
-                RequestParams::PARAM_TYPE_ATTRIBUTE,
-                CommonParams::PARAMETER_ID
-            );
-        }
-        $entityProperties->setIgnoreValues($ignoreValues);
-
         return new ParamRule(
             self::PARAMETER_NAME,
             new Rule(Rules::STRING_TYPE),
             new Rule(Rules::LENGTH, [null, self::NAME_MAX_LENGTH]),
-            new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [ExpenseType::class, 'name', $entityProperties])
+            new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [ExpenseType::class, 'name', $uniqueOption])
         );
+    }
+
+    /**
+     * @return EntityUniquePropertyOption
+     */
+    private function getClaimExpenseTypeCommonUniqueOption(): EntityUniquePropertyOption
+    {
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreValues(['isDeleted' => true]);
+        return $uniqueOption;
     }
 
     /**
@@ -260,15 +263,21 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Delete(
      *     path="/api/v2/claim/expenses/types",
-     *     tags={"Claim/ExpenseTypes"},
+     *     tags={"Claim/Expense Types"},
+     *     summary="Delete Expense Types",
+     *     operationId="delete-expense-types",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/ForbiddenResponse")
      * )
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getClaimService()->getClaimDao()->getExistingExpenseTypeIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getClaimService()->getClaimDao()->deleteExpenseTypes($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }
@@ -289,7 +298,9 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Get(
      *     path="/api/v2/claim/expenses/types/{id}",
-     *     tags={"Claim/ExpenseTypes"},
+     *     tags={"Claim/Expense Types"},
+     *     summary="Get an Expense Type",
+     *     operationId="get-an-expense-type",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -342,7 +353,9 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Put(
      *     path="/api/v2/claim/expenses/types/{id}",
-     *     tags={"Claim/ExpenseTypes"},
+     *     tags={"Claim/Expense Types"},
+     *     summary="Update an Expense Type",
+     *     operationId="update-an-expense-type",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -401,6 +414,9 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
+        $uniqueOption = $this->getClaimExpenseTypeCommonUniqueOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         return new ParamRuleCollection(
             new ParamRule(
                 CommonParams::PARAMETER_ID,
@@ -419,7 +435,7 @@ class ClaimExpenseTypeAPI extends Endpoint implements CrudEndpoint
                 new Rule(Rules::BOOL_VAL)
             ),
             $this->getValidationDecorator()->notRequiredParamRule(
-                $this->getNameRule(true),
+                $this->getNameRule($uniqueOption),
             ),
         );
     }

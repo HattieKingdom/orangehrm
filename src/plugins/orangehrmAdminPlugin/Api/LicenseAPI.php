@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -28,7 +27,6 @@ use OrangeHRM\Core\Api\V2\CrudEndpoint;
 use OrangeHRM\Core\Api\V2\Endpoint;
 use OrangeHRM\Core\Api\V2\EndpointCollectionResult;
 use OrangeHRM\Core\Api\V2\EndpointResourceResult;
-use OrangeHRM\Core\Api\V2\Exception\RecordNotFoundException;
 use OrangeHRM\Core\Api\V2\Model\ArrayModel;
 use OrangeHRM\Core\Api\V2\ParameterBag;
 use OrangeHRM\Core\Api\V2\RequestParams;
@@ -36,7 +34,7 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
+use OrangeHRM\Core\Api\V2\Validator\Rules\EntityUniquePropertyOption;
 use OrangeHRM\Entity\License;
 
 class LicenseAPI extends Endpoint implements CrudEndpoint
@@ -51,7 +49,6 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
 
     /**
      * @return LicenseService
-     * @throws Exception
      */
     public function getLicenseService(): LicenseService
     {
@@ -62,17 +59,11 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
-     * @param LicenseService $licenseService
-     */
-    public function setLicenseService(LicenseService $licenseService): void
-    {
-        $this->licenseService = $licenseService;
-    }
-
-    /**
      * @OA\Get(
      *     path="/api/v2/admin/licenses/{id}",
      *     tags={"Admin/License"},
+     *     summary="Get a License",
+     *     operationId="get-a-license",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -119,6 +110,8 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/licenses",
      *     tags={"Admin/License"},
+     *     summary="List All Licenses",
+     *     operationId="list-all-licenses",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -175,10 +168,12 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/licenses",
      *     tags={"Admin/License"},
+     *     summary="Create a License",
+     *     operationId="create-a-license",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\LicenseAPI::PARAM_RULE_NAME_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),
@@ -199,25 +194,18 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
      */
     public function create(): EndpointResourceResult
     {
-        $licenses = $this->saveLicense();
+        $license = new License();
+        $licenses = $this->saveLicense($license);
         return new EndpointResourceResult(LicenseModel::class, $licenses);
     }
 
     /**
+     * @param License $license
      * @return License
-     * @throws DaoException
-     * @throws RecordNotFoundException
      */
-    public function saveLicense(): License
+    public function saveLicense(License $license): License
     {
-        $id = $this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_ATTRIBUTE, CommonParams::PARAMETER_ID);
         $name = $this->getRequestParams()->getString(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_NAME);
-        if ($id) {
-            $license = $this->getLicenseService()->getLicenseById($id);
-            $this->throwRecordNotFoundExceptionIfNotExist($license, License::class);
-        } else {
-            $license = new License();
-        }
         $license->setName($name);
         return $this->getLicenseService()->saveLicense($license);
     }
@@ -228,11 +216,7 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForCreate(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+            $this->getNameRule()
         );
     }
 
@@ -240,6 +224,8 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/licenses/{id}",
      *     tags={"Admin/License"},
+     *     summary="Update a License",
+     *     operationId="update-a-license",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -247,7 +233,7 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\LicenseAPI::PARAM_RULE_NAME_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),
@@ -269,7 +255,9 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
      */
     public function update(): EndpointResourceResult
     {
-        $licenses = $this->saveLicense();
+        $license = $this->getLicenseService()->getLicenseById($this->getAttributeId());
+        $this->throwRecordNotFoundExceptionIfNotExist($license, License::class);
+        $licenses = $this->saveLicense($license);
         return new EndpointResourceResult(LicenseModel::class, $licenses);
     }
 
@@ -278,31 +266,31 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         return new ParamRuleCollection(
             new ParamRule(
                 CommonParams::PARAMETER_ID,
                 new Rule(Rules::POSITIVE)
             ),
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+            $this->getNameRule($uniqueOption)
         );
     }
 
     /**
-     * @return ParamRuleCollection
+     * @param EntityUniquePropertyOption|null $uniqueOption
+     * @return ParamRule
      */
-    public function getValidationRuleForSaveLicense(): ParamRuleCollection
+    private function getNameRule(?EntityUniquePropertyOption $uniqueOption = null): ParamRule
     {
-        return new ParamRuleCollection(
-            new ParamRule(CommonParams::PARAMETER_ID),
+        return $this->getValidationDecorator()->requiredParamRule(
             new ParamRule(
                 self::PARAMETER_NAME,
                 new Rule(Rules::STRING_TYPE),
                 new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+                new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [License::class, 'name', $uniqueOption])
+            )
         );
     }
 
@@ -310,15 +298,21 @@ class LicenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/admin/licenses",
      *     tags={"Admin/License"},
+     *     summary="Delete Licenses",
+     *     operationId="delete-licenses",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResourceResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getLicenseService()->getLicenseDao()->getExistingLicenseIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getLicenseService()->deleteLicenses($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -47,6 +46,7 @@ class ModulesAPI extends Endpoint implements CrudEndpoint
     public const PARAMETER_MOBILE = 'mobile';
     public const PARAMETER_DIRECTORY = 'directory';
     public const PARAMETER_CLAIM = 'claim';
+    public const PARAMETER_BUZZ = 'buzz';
 
     /**
      * @var ModuleService|null
@@ -67,6 +67,7 @@ class ModulesAPI extends Endpoint implements CrudEndpoint
         self::PARAMETER_MOBILE => false,
         self::PARAMETER_DIRECTORY => false,
         self::PARAMETER_CLAIM => false,
+        self::PARAMETER_BUZZ => false,
     ];
 
     /**
@@ -85,6 +86,8 @@ class ModulesAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/modules",
      *     tags={"Admin/Modules"},
+     *     summary="List All Modules",
+     *     operationId="list-all-modules",
      *     @OA\Response(
      *         response="200",
      *         description="Success",
@@ -187,6 +190,8 @@ class ModulesAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/modules",
      *     tags={"Admin/Modules"},
+     *     summary="Update a Module",
+     *     operationId="update-a-module",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
@@ -200,7 +205,8 @@ class ModulesAPI extends Endpoint implements CrudEndpoint
      *             @OA\Property(property="maintenance", type="boolean"),
      *             @OA\Property(property="mobile", type="boolean"),
      *             @OA\Property(property="directory", type="boolean"),
-     *             @OA\Property(property="claim", type="boolean")
+     *             @OA\Property(property="claim", type="boolean"),
+     *             @OA\Property(property="buzz", type="boolean"),
      *         )
      *     ),
      *     @OA\Response(response="200",
@@ -285,6 +291,12 @@ class ModulesAPI extends Endpoint implements CrudEndpoint
             $this->getValidationDecorator()->notRequiredParamRule(
                 new ParamRule(
                     self::PARAMETER_CLAIM,
+                    new Rule(Rules::BOOL_TYPE),
+                )
+            ),
+            $this->getValidationDecorator()->notRequiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_BUZZ,
                     new Rule(Rules::BOOL_TYPE),
                 )
             )

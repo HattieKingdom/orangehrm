@@ -4,22 +4,20 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Service;
 
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\EmployeeImmigrationRecord;
 use OrangeHRM\Pim\Dao\EmployeeImmigrationRecordDao;
 use OrangeHRM\Pim\Dto\EmployeeImmigrationRecordSearchFilterParams;
@@ -54,7 +52,6 @@ class EmployeeImmigrationRecordService
      * @param int $empNumber
      * @param int $recordNo
      * @return EmployeeImmigrationRecord|null
-     * @throws DaoException
      */
     public function getEmployeeImmigrationRecord(int $empNumber, int $recordNo): ?EmployeeImmigrationRecord
     {
@@ -64,7 +61,6 @@ class EmployeeImmigrationRecordService
     /**
      * @param int $empNumber
      * @return array
-     * @throws DaoException
      */
     public function getEmployeeImmigrationRecordList(int $empNumber): array
     {
@@ -85,7 +81,6 @@ class EmployeeImmigrationRecordService
      * @param int $empNumber
      * @param array $sequenceNumbers
      * @return int
-     * @throws DaoException
      */
     public function deleteEmployeeImmigrationRecords(int $empNumber, array $sequenceNumbers): int
     {
@@ -95,7 +90,6 @@ class EmployeeImmigrationRecordService
     /**
      * @param EmployeeImmigrationRecordSearchFilterParams $employeeImmigrationRecordSearchFilterParams
      * @return array
-     * @throws DaoException
      */
     public function searchEmployeeImmigrationRecords(
         EmployeeImmigrationRecordSearchFilterParams $employeeImmigrationRecordSearchFilterParams
@@ -106,7 +100,6 @@ class EmployeeImmigrationRecordService
     /**
      * @param EmployeeImmigrationRecordSearchFilterParams $employeeImmigrationRecordSearchFilterParams
      * @return int
-     * @throws DaoException
      */
     public function getSearchEmployeeImmigrationRecordsCount(
         EmployeeImmigrationRecordSearchFilterParams $employeeImmigrationRecordSearchFilterParams

@@ -3,17 +3,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 import JobTitle from './pages/jobTitle/JobTitle.vue';
@@ -65,7 +64,12 @@ import LocalizationConfiguration from './pages/localization/LocalizationConfigur
 import CorporateBranding from './pages/corporateBranding/CorporateBranding.vue';
 import LanguagePackages from '@/orangehrmAdminPlugin/pages/languagePackage/LanguagePackage.vue';
 import EditLanguagePackage from '@/orangehrmAdminPlugin/pages/languageTranslation/languageTranslation.vue';
+import LanguageImport from './pages/languageImport/LanguageImport.vue';
 import LdapConfiguration from './pages/ldap/LdapConfiguration.vue';
+import ProviderList from './pages/socialMediaAuth/ProviderList.vue';
+import AddProvider from './pages/socialMediaAuth/AddProvider.vue';
+import EditProvider from './pages/socialMediaAuth/EditProvider.vue';
+import FixLanguageErrors from './pages/languageImport/FixLanguageStringErrors.vue';
 
 export default {
   'job-title-list': JobTitle,
@@ -117,5 +121,10 @@ export default {
   'corporate-branding': CorporateBranding,
   'language-package-list': LanguagePackages,
   'language-translation-edit': EditLanguagePackage,
+  'language-import': LanguageImport,
   'ldap-configuration': LdapConfiguration,
+  'auth-provider-list': ProviderList,
+  'add-auth-provider': AddProvider,
+  'edit-auth-provider': EditProvider,
+  'fix-language-errors': FixLanguageErrors,
 };

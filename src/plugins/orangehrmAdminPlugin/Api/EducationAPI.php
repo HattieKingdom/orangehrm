@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -28,7 +27,6 @@ use OrangeHRM\Core\Api\V2\CrudEndpoint;
 use OrangeHRM\Core\Api\V2\Endpoint;
 use OrangeHRM\Core\Api\V2\EndpointCollectionResult;
 use OrangeHRM\Core\Api\V2\EndpointResourceResult;
-use OrangeHRM\Core\Api\V2\Exception\RecordNotFoundException;
 use OrangeHRM\Core\Api\V2\Model\ArrayModel;
 use OrangeHRM\Core\Api\V2\ParameterBag;
 use OrangeHRM\Core\Api\V2\RequestParams;
@@ -36,7 +34,7 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
+use OrangeHRM\Core\Api\V2\Validator\Rules\EntityUniquePropertyOption;
 use OrangeHRM\Entity\Education;
 
 class EducationAPI extends Endpoint implements CrudEndpoint
@@ -53,6 +51,8 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/educations/{id}",
      *     tags={"Admin/Education"},
+     *     summary="Get an Education Record",
+     *     operationId="get-an-education-record",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -94,14 +94,6 @@ class EducationAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
-     * @param EducationService $educationService
-     */
-    public function setEducationService(EducationService $educationService): void
-    {
-        $this->educationService = $educationService;
-    }
-
-    /**
      * @inheritDoc
      */
     public function getValidationRuleForGetOne(): ParamRuleCollection
@@ -118,6 +110,8 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/educations",
      *     tags={"Admin/Education"},
+     *     summary="List All Education Records",
+     *     operationId="list-all-education-records",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -176,10 +170,12 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/educations",
      *     tags={"Admin/Education"},
+     *     summary="Create an Education Record",
+     *     operationId="create-an-education-record",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\EducationAPI::PARAM_RULE_NAME_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),
@@ -200,25 +196,18 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      */
     public function create(): EndpointResourceResult
     {
-        $educations = $this->saveEducation();
+        $education = new Education();
+        $educations = $this->saveEducation($education);
         return new EndpointResourceResult(EducationModel::class, $educations);
     }
 
     /**
+     * @param Education $education
      * @return Education
-     * @throws RecordNotFoundException
-     * @throws DaoException
      */
-    public function saveEducation(): Education
+    public function saveEducation(Education $education): Education
     {
-        $id = $this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_ATTRIBUTE, CommonParams::PARAMETER_ID);
         $name = $this->getRequestParams()->getString(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_NAME);
-        if ($id) {
-            $education = $this->getEducationService()->getEducationById($id);
-            $this->throwRecordNotFoundExceptionIfNotExist($education, Education::class);
-        } else {
-            $education = new Education();
-        }
         $education->setName($name);
         return $this->getEducationService()->saveEducation($education);
     }
@@ -229,11 +218,7 @@ class EducationAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForCreate(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+            $this->getNameRule()
         );
     }
 
@@ -241,6 +226,8 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/educations/{id}",
      *     tags={"Admin/Education"},
+     *     summary="Update an Education Record",
+     *     operationId="update-an-education-record",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -248,7 +235,7 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\EducationAPI::PARAM_RULE_NAME_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),
@@ -270,7 +257,9 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      */
     public function update(): EndpointResourceResult
     {
-        $educations = $this->saveEducation();
+        $education = $this->getEducationService()->getEducationById($this->getAttributeId());
+        $this->throwRecordNotFoundExceptionIfNotExist($education, Education::class);
+        $educations = $this->saveEducation($education);
         return new EndpointResourceResult(EducationModel::class, $educations);
     }
 
@@ -279,31 +268,31 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         return new ParamRuleCollection(
             new ParamRule(
                 CommonParams::PARAMETER_ID,
                 new Rule(Rules::POSITIVE)
             ),
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+            $this->getNameRule($uniqueOption)
         );
     }
 
     /**
-     * @return ParamRuleCollection
+     * @param EntityUniquePropertyOption|null $uniqueOption
+     * @return ParamRule
      */
-    public function getValidationRuleForSaveEducation(): ParamRuleCollection
+    private function getNameRule(?EntityUniquePropertyOption $uniqueOption = null): ParamRule
     {
-        return new ParamRuleCollection(
-            new ParamRule(CommonParams::PARAMETER_ID),
+        return $this->getValidationDecorator()->requiredParamRule(
             new ParamRule(
                 self::PARAMETER_NAME,
                 new Rule(Rules::STRING_TYPE),
                 new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+                new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [Education::class, 'name', $uniqueOption])
+            )
         );
     }
 
@@ -311,15 +300,21 @@ class EducationAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/admin/educations",
      *     tags={"Admin/Education"},
+     *     summary="Delete Education Records",
+     *     operationId="delete-education-records",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResourceResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getEducationService()->getEducationDao()->getExistingEducationIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getEducationService()->deleteEducations($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }
@@ -331,7 +326,10 @@ class EducationAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForDelete(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(CommonParams::PARAMETER_IDS),
+            new ParamRule(
+                CommonParams::PARAMETER_IDS,
+                new Rule(Rules::INT_ARRAY)
+            ),
         );
     }
 }

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Api;
@@ -110,6 +109,105 @@ class LeaveOverlapAPI extends Endpoint implements CollectionEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/leave/overlap-leaves",
+     *     tags={"Leave/Overlap Leave"},
+     *     summary="Get Overlapping Leaves",
+     *     operationId="get-overlapping-leaves",
+     *     @OA\Parameter(
+     *         name="empNumber",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="fromDate",
+     *         in="query",
+     *         required=true,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="toDate",
+     *         in="query",
+     *         required=true,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="duration[type]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", example="full_day, half_day_afternoon")
+     *     ),
+     *     @OA\Parameter(
+     *         name="duration[fromTime]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", format="time")
+     *     ),
+     *     @OA\Parameter(
+     *         name="duration[toTime]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", format="time")
+     *     ),
+     *     @OA\Parameter(
+     *         name="endDuration[type]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={
+     *                 OrangeHRM\Leave\Dto\LeaveDuration::FULL_DAY,
+     *                 OrangeHRM\Leave\Dto\LeaveDuration::HALF_DAY_MORNING,
+     *                 OrangeHRM\Leave\Dto\LeaveDuration::HALF_DAY_AFTERNOON,
+     *                 OrangeHRM\Leave\Dto\LeaveDuration::SPECIFY_TIME
+     *             }
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="endDuration[fromTime]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", format="time")
+     *     ),
+     *     @OA\Parameter(
+     *         name="endDuration[toTime]",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", format="time")
+     *     ),
+     *     @OA\Parameter(
+     *         name="partialOption",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={
+     *                 OrangeHRM\Leave\Dto\LeaveParameterObject::PARTIAL_OPTION_NONE,
+     *                 OrangeHRM\Leave\Dto\LeaveParameterObject::PARTIAL_OPTION_ALL,
+     *                 OrangeHRM\Leave\Dto\LeaveParameterObject::PARTIAL_OPTION_START,
+     *                 OrangeHRM\Leave\Dto\LeaveParameterObject::PARTIAL_OPTION_END,
+     *                 OrangeHRM\Leave\Dto\LeaveParameterObject::PARTIAL_OPTION_START_END
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Leave-OverlapLeaveModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", type="integer"),
+     *                 @OA\Property(property="isWorkShiftLengthExceeded", type="boolean")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function getAll(): EndpointResult

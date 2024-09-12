@@ -5,17 +5,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Time\Dao;
@@ -69,6 +68,23 @@ class ProjectDao extends BaseDao
         $qb->andWhere('project.id = :id')->setParameter('id', $id);
         $qb->andWhere('project.deleted = :deleted')->setParameter('deleted', false);
         return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingProjectIds(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(Project::class, 'project');
+
+        $qb->select('project.id')
+            ->andWhere($qb->expr()->in('project.id', ':ids'))
+            ->andWhere($qb->expr()->eq('project.deleted', ':deleted'))
+            ->setParameter('ids', $ids)
+            ->setParameter('deleted', false);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**
@@ -257,7 +273,6 @@ class ProjectDao extends BaseDao
         $q = $this->getProjectReportQueryBuilderWrapper($projectReportSearchFilterParams)->getQueryBuilder();
         $q->select(
             'projectActivity.id AS activityId,
-            timesheet.id,
             projectActivity.name, 
             projectActivity.deleted AS deleted, 
             SUM(COALESCE(timesheetItem.duration, 0)) AS totalDuration'
@@ -320,7 +335,7 @@ class ProjectDao extends BaseDao
         }
 
         if ($projectReportSearchFilterParams->getIncludeApproveTimesheet(
-            ) === ProjectReportSearchFilterParams::INCLUDE_TIMESHEET_ONLY_APPROVED) {
+        ) === ProjectReportSearchFilterParams::INCLUDE_TIMESHEET_ONLY_APPROVED) {
             $q->andWhere('timesheet.state = :state');
             $q->setParameter('state', ProjectReportSearchFilterParams::TIMESHEET_STATE_APPROVED);
         }
@@ -352,7 +367,7 @@ class ProjectDao extends BaseDao
         }
 
         if ($projectReportSearchFilterParams->getIncludeApproveTimesheet(
-            ) === ProjectReportSearchFilterParams::INCLUDE_TIMESHEET_ONLY_APPROVED) {
+        ) === ProjectReportSearchFilterParams::INCLUDE_TIMESHEET_ONLY_APPROVED) {
             $q->andWhere('timesheet.state = :state');
             $q->setParameter('state', ProjectReportSearchFilterParams::TIMESHEET_STATE_APPROVED);
         }

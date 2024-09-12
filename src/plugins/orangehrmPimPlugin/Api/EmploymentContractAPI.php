@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -31,7 +30,6 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
 use OrangeHRM\Core\Dto\Base64Attachment;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Core\Traits\UserRoleManagerTrait;
 use OrangeHRM\Entity\EmpContract;
 use OrangeHRM\Entity\EmployeeAttachment;
@@ -71,6 +69,31 @@ class EmploymentContractAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/employment-contract",
+     *     tags={"PIM/Employment Contract"},
+     *     summary="Get an Employee's Employment Contract",
+     *     operationId="get-an-employees-employment-contract",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmploymentContractModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", type="integer")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResourceResult
@@ -108,6 +131,44 @@ class EmploymentContractAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/employment-contract",
+     *     tags={"PIM/Employment Contract"},
+     *     summary="Update an Employee's Employment Contract",
+     *     operationId="update-an-employees-employment-contract",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="startDate", type="string", format="date"),
+     *             @OA\Property(property="endDate", type="string", format="date"),
+     *             @OA\Property(
+     *                 property="currentContractAttachment",
+     *                 type="string",
+     *                 enum={
+     *                     OrangeHRM\Pim\Api\EmploymentContractAPI::CONTRACT_ATTACHMENT_REPLACE_CURRENT,
+     *                     OrangeHRM\Pim\Api\EmploymentContractAPI::CONTRACT_ATTACHMENT_KEEP_CURRENT,
+     *                     OrangeHRM\Pim\Api\EmploymentContractAPI::CONTRACT_ATTACHMENT_DELETE_CURRENT
+     *                 }
+     *             ),
+     *             @OA\Property(property="contractAttachment", ref="#/components/schemas/Base64Attachment"),
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmploymentContractModel"
+     *             ),
+     *             @OA\Property(property="empNumber", type="integer")
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function update(): EndpointResourceResult
@@ -130,7 +191,6 @@ class EmploymentContractAPI extends Endpoint implements ResourceEndpoint
     /**
      * @param int $empNumber
      * @return EmpContract
-     * @throws DaoException
      */
     private function updateEmploymentContract(int $empNumber): EmpContract
     {
@@ -164,7 +224,6 @@ class EmploymentContractAPI extends Endpoint implements ResourceEndpoint
     /**
      * @param int $empNumber
      * @throws BadRequestException
-     * @throws DaoException
      */
     private function updateContractAttachment(int $empNumber): void
     {

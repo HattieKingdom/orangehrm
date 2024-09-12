@@ -4,24 +4,23 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
 
 use OrangeHRM\Admin\Dto\PayGradeSearchFilterParams;
 use OrangeHRM\Admin\Api\Model\PayGradeModel;
-use OrangeHRM\Admin\Service\PayGradeService;
+use OrangeHRM\Admin\Traits\Service\PayGradeServiceTrait;
 use OrangeHRM\Core\Api\CommonParams;
 use OrangeHRM\Core\Api\V2\CrudEndpoint;
 use OrangeHRM\Core\Api\V2\Endpoint;
@@ -35,28 +34,22 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Traits\ServiceContainerTrait;
+use OrangeHRM\Core\Api\V2\Validator\Rules\EntityUniquePropertyOption;
 use OrangeHRM\Entity\PayGrade;
-use OrangeHRM\Framework\Services;
 
 class PayGradeAPI extends Endpoint implements CrudEndpoint
 {
-    use ServiceContainerTrait;
+    use PayGradeServiceTrait;
 
     public const PARAMETER_NAME = 'name';
     public const PARAM_RULE_NAME_MAX_LENGTH = 100;
-    /**
-     * @return PayGradeService
-     */
-    public function getPayGradeService(): PayGradeService
-    {
-        return $this->getContainer()->get(Services::PAY_GRADE_SERVICE);
-    }
 
     /**
      * @OA\Get(
      *     path="/api/v2/admin/pay-grades",
      *     tags={"Admin/Pay Grade"},
+     *     summary="List All Pay Grades",
+     *     operationId="list-all-pay-grades",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -94,7 +87,7 @@ class PayGradeAPI extends Endpoint implements CrudEndpoint
         return  new EndpointCollectionResult(
             PayGradeModel::class,
             $payGrades,
-            new ParameterBag([CommonParams::PARAMETER_TOTAL=>$count])
+            new ParameterBag([CommonParams::PARAMETER_TOTAL => $count])
         );
     }
 
@@ -110,6 +103,8 @@ class PayGradeAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/pay-grades",
      *     tags={"Admin/Pay Grade"},
+     *     summary="Create a Pay Grade",
+     *     operationId="create-a-pay-grade",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
@@ -133,7 +128,8 @@ class PayGradeAPI extends Endpoint implements CrudEndpoint
      */
     public function create(): EndpointResourceResult
     {
-        $payGrade = $this->savePayGrade();
+        $payGrade = new PayGrade();
+        $payGrade = $this->savePayGrade($payGrade);
         return new EndpointResourceResult(PayGradeModel::class, $payGrade);
     }
 
@@ -151,15 +147,21 @@ class PayGradeAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/admin/pay-grades",
      *     tags={"Admin/Pay Grade"},
+     *     summary="Delete Pay Grades",
+     *     operationId="delete-pay-grades",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getPayGradeService()->getPayGradeDao()->getExistingPayGradeIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getPayGradeService()->deletePayGrades($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }
@@ -170,30 +172,35 @@ class PayGradeAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForDelete(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(CommonParams::PARAMETER_IDS, new Rule(Rules::ARRAY_TYPE))
+            new ParamRule(
+                CommonParams::PARAMETER_IDS,
+                new Rule(Rules::INT_ARRAY)
+            )
         );
     }
 
     /**
-     *@OA\Get(
+     * @OA\Get(
      *     path="/api/v2/admin/pay-grades/{id}",
      *     tags={"Admin/Pay Grade"},
-     * @OA\PathParameter(
-     *     name="id",
-     *     @OA\Schema(type="integer")
-     * ),
-     * @OA\Response(
-     *     response="200",
-     *     description="Success",
-     *     @OA\JsonContent(
-     *         @OA\Property(
-     *             property="data",
-     *             ref="#/components/schemas/Admin-PayGradeModel"
-     *         ),
-     *         @OA\Property(property="meta", type="object")
-     *     )
-     * ),
-     * @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     *     summary="Get a Pay Grade",
+     *     operationId="get-a-pay-grade",
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Admin-PayGradeModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
@@ -220,6 +227,8 @@ class PayGradeAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/pay-grades/{id}",
      *     tags={"Admin/Pay Grade"},
+     *     summary="Update a Pay Grade",
+     *     operationId="update-a-pay-grade",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -247,7 +256,9 @@ class PayGradeAPI extends Endpoint implements CrudEndpoint
      */
     public function update(): EndpointResourceResult
     {
-        $payGrade = $this->savePayGrade();
+        $payGrade = $this->getPayGradeService()->getPayGradeById($this->getAttributeId());
+        $this->throwRecordNotFoundExceptionIfNotExist($payGrade, PayGrade::class);
+        $payGrade = $this->savePayGrade($payGrade);
         return new EndpointResourceResult(PayGradeModel::class, $payGrade);
     }
 
@@ -256,44 +267,44 @@ class PayGradeAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         return new ParamRuleCollection(
             new ParamRule(
                 CommonParams::PARAMETER_ID,
                 new Rule(Rules::POSITIVE)
             ),
-            ...$this->getCommonBodyValidationRules()
+            ...$this->getCommonBodyValidationRules($uniqueOption)
         );
     }
 
     /**
+     * @param PayGrade $payGrade
      * @return PayGrade
-     * @throws \OrangeHRM\Core\Exception\DaoException
      */
-    protected function savePayGrade(): PayGrade
+    protected function savePayGrade(PayGrade $payGrade): PayGrade
     {
-        $id = $this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_ATTRIBUTE, CommonParams::PARAMETER_ID);
         $name = $this->getRequestParams()->getString(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_NAME);
-        if (!empty($id)) {
-            $payGrade = $this->getPayGradeService()->getPayGradeById($id);
-            $this->throwRecordNotFoundExceptionIfNotExist($payGrade, PayGrade::class);
-        } else {
-            $payGrade = new PayGrade();
-        }
         $payGrade->setName($name);
         return  $this->getPayGradeService()->savePayGrade($payGrade);
     }
 
     /**
+     * @param EntityUniquePropertyOption|null $uniqueOption
      * @return ParamRule[]
      */
-    public function getCommonBodyValidationRules(): array
+    public function getCommonBodyValidationRules(?EntityUniquePropertyOption $uniqueOption = null): array
     {
         return [
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
-            ),
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_NAME,
+                    new Rule(Rules::STRING_TYPE),
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
+                    new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [PayGrade::class, 'name', $uniqueOption])
+                )
+            )
         ];
     }
 }

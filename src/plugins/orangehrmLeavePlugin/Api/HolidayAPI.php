@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Api;
@@ -33,7 +32,6 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\Holiday;
 use OrangeHRM\Leave\Api\Model\HolidayModel;
 use OrangeHRM\Leave\Dto\HolidaySearchFilterParams;
@@ -56,7 +54,9 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Get(
      *     path="/api/v2/leave/holidays/{id}",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Holiday"},
+     *     summary="Get a Holiday",
+     *     operationId="get-a-holiday",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -112,7 +112,9 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Get(
      *     path="/api/v2/leave/holidays",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Holiday"},
+     *     summary="List All Holidays",
+     *     operationId="list-all-holidays",
      *     @OA\Parameter(
      *         name="toDate",
      *         in="query",
@@ -187,19 +189,26 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Post(
      *     path="/api/v2/leave/holidays",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Holiday"},
+     *     summary="Create a Holiday",
+     *     operationId="create-a-holiday",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="date", type="number"),
+     *             @OA\Property(property="date", type="string", format="date"),
      *             @OA\Property(
      *                 property="length",
      *                 type="integer",
-     *                 enum={ 0, 4},
+     *                 enum={0, 4},
      *                 description="0 - working day, 4 - half day"
      *             ),
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="recurring", type="boolean")
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Leave\Api\HolidayAPI::PARAM_RULE_NAME_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="recurring", type="boolean"),
+     *             required={"name", "date"}
      *         )
      *     ),
      *     @OA\Response(response="200",
@@ -253,9 +262,11 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
     private function getCommonBodyParamRuleCollection(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH])
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_NAME,
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH])
+                )
             ),
             new ParamRule(
                 self::PARAMETER_DATE,
@@ -275,7 +286,9 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Put(
      *     path="/api/v2/leave/holidays/{id}",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Holiday"},
+     *     summary="Update a Holiday",
+     *     operationId="Update a Holiday",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -283,7 +296,7 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="date", type="number"),
+     *             @OA\Property(property="date", type="string", format="date"),
      *             @OA\Property(
      *                 property="length",
      *                 type="integer",
@@ -333,18 +346,23 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Delete(
      *     path="/api/v2/leave/holidays",
-     *     tags={"Leave/Configure"},
+     *     tags={"Leave/Holiday"},
+     *     summary="Delete Holidays",
+     *     operationId="delete-holidays",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
-     * @throws DaoException
      * @throws Exception
      */
     public function delete(): EndpointResourceResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getHolidayService()->getHolidayDao()->getExistingHolidayIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getHolidayService()->deleteHolidays($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }
@@ -357,7 +375,7 @@ class HolidayAPI extends Endpoint implements CrudEndpoint
         return new ParamRuleCollection(
             new ParamRule(
                 CommonParams::PARAMETER_IDS,
-                new Rule(Rules::ARRAY_TYPE)
+                new Rule(Rules::INT_ARRAY)
             )
         );
     }

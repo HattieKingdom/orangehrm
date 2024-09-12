@@ -1,3 +1,52 @@
+New & Changed Features for OrangeHRM ver 5.7
+    New Features/Changes
+    -----------
+    - Language Package Import
+        - Allowing OrangeHRM Starter users to import translations via XLIFF files
+    - Supported Environments
+        - PHP - 7.4 to 8.3
+        - MariaDB - 5.5 to 11.4
+        - MySQL - 5.5 to 8.4
+
+    Bug Fixes
+    ---------
+    - Several API defects fixed
+    - https://github.com/orangehrm/orangehrm/issues/1853 (installation failure on MySQL 8.4)
+
+Changed Features for OrangeHRM ver 5.6.1
+    Changes
+    -----------
+    - Security
+        - Update BE and FE libraries to latest minor versions
+        - Sanitize SVG uploads in Corporate Branding
+        - Password strength validation in CLI installer
+        - Update Docker PHP image
+    - Supported Environments
+        - PHP - 7.4 to 8.3
+        - MariaDB - 5.5 to 11.3
+        - MySQL - 5.5 to 8.3
+
+     Bug Fixes
+     -----------
+     - https://github.com/orangehrm/orangehrm/issues/1817 (Support ONLY_FULL_GROUP_BY sql_mode throughout the application)
+     - https://github.com/orangehrm/orangehrm/issues/1780 (Handle PHP timeout on Windows environments)
+
+New & Changed Features for OrangeHRM ver 5.6
+    New Features/Changes
+    -----------
+    - Social Media Authentication
+        - Allowing OrangeHRM Starter users to create and manage alternative logins using different OpenID Connect providers such as Google.
+    - License Upgrade to GPLv3
+        - Product License upgrade to GNU General Public License v3.0
+    - Supported Environments
+        - PHP - 7.4 to 8.3
+        - MariaDB - 5.5 to 11.2
+        - MySQL - 5.5 to 8.2
+
+    Bug Fixes
+    ---------
+    - https://github.com/orangehrm/orangehrm/issues/1731
+
 New & Changed Features for OrangeHRM ver 5.5
     New Feature
     -----------

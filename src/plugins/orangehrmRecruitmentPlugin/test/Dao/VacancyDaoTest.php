@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Tests\Recruitment\Dao;
@@ -138,11 +137,11 @@ class VacancyDaoTest extends KernelTestCase
         $this->assertEquals('Part-Time Technical Assistant', $vacancies[0]->getName());
     }
 
-    public function testGetVacanciesGroupByHiringManagers(): void
+    public function testGetVacancyListGroupByHiringManager(): void
     {
         $vacancySearchFilterParams = new VacancySearchFilterParams();
         $vacancySearchFilterParams->setVacancyIds([1,2,3,4]);
-        $vacancies = $this->vacancyDao->getVacancyListGroupByHiringManager($vacancySearchFilterParams);
+        $vacancies = $this->vacancyDao->getHiringManagerEmpNumberList($vacancySearchFilterParams);
         $this->assertCount(3, $vacancies);
     }
 

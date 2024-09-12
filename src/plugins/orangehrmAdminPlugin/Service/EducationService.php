@@ -4,24 +4,22 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Service;
 
 use OrangeHRM\Admin\Dao\EducationDao;
 use OrangeHRM\Admin\Dto\QualificationEducationSearchFilterParams;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\Education;
 
 class EducationService
@@ -37,7 +35,6 @@ class EducationService
      *
      * @param Education $education
      * @return Education
-     * @throws DaoException
      */
     public function saveEducation(Education $education): Education
     {
@@ -58,7 +55,7 @@ class EducationService
     }
 
     /**
-     * @param $educationDao
+     * @param EducationDao $educationDao
      * @return void
      */
     public function setEducationDao(EducationDao $educationDao): void
@@ -71,7 +68,6 @@ class EducationService
      *
      * @param int $id
      * @return Education An instance of Education or NULL
-     * @throws DaoException
      */
     public function getEducationById(int $id): ?Education
     {
@@ -81,11 +77,10 @@ class EducationService
     /**
      * Retrieves an education object by name
      *
-     * Case insensitive
+     * Case-insensitive
      *
      * @param string $name
      * @return Education An instance of Education or false
-     * @throws DaoException
      */
     public function getEducationByName(string $name): ?Education
     {
@@ -95,7 +90,6 @@ class EducationService
     /**
      * @param QualificationEducationSearchFilterParams $educationSearchParamHolder
      * @return array
-     * @throws DaoException
      */
     public function getEducationList(QualificationEducationSearchFilterParams $educationSearchParamHolder): array
     {
@@ -105,7 +99,6 @@ class EducationService
     /**
      * @param QualificationEducationSearchFilterParams $educationSearchParamHolder
      * @return int
-     * @throws DaoException
      */
     public function getEducationCount(QualificationEducationSearchFilterParams $educationSearchParamHolder): int
     {
@@ -117,7 +110,6 @@ class EducationService
      *
      * @param array $toDeleteIds An array of IDs to be deleted
      * @return int Number of records deleted
-     * @throws DaoException
      */
     public function deleteEducations(array $toDeleteIds): int
     {
@@ -127,11 +119,10 @@ class EducationService
     /**
      * Checks whether the given education name exists
      *
-     * Case insensitive
+     * Case-insensitive
      *
      * @param string $educationName Education name that needs to be checked
      * @return bool
-     * @throws DaoException
      */
     public function isExistingEducationName(string $educationName): bool
     {

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Dao;
@@ -38,6 +37,20 @@ class LocationDao extends BaseDao
     public function getLocationById(int $locationId): ?Location
     {
         return $this->getRepository(Location::class)->find($locationId);
+    }
+
+    /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingLocationIds(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(Location::class, 'location');
+        $qb->select('location.id')
+            ->andWhere($qb->expr()->in('location.id', ':ids'))
+            ->setParameter('ids', $ids);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**
@@ -154,18 +167,17 @@ class LocationDao extends BaseDao
         $locationIds = [];
 
         if (!empty($empNumbers)) {
-            $q = $this->createQueryBuilder(EmpLocations::class, 'el');
-            $q->distinct()
-                ->addGroupBy('el.location');
-            $q->andWhere($q->expr()->in('el.employee', ':empNumbers'))
+            $q = $this->createQueryBuilder(EmpLocations::class, 'empLocation');
+            $q->select('IDENTITY(empLocation.location) as locationId')
+                ->distinct()
+                ->addGroupBy('locationId');
+            $q->andWhere($q->expr()->in('empLocation.employee', ':empNumbers'))
                 ->setParameter('empNumbers', $empNumbers);
 
             /** @var EmpLocations[] $locations */
             $locations = $q->getQuery()->execute();
 
-            foreach ($locations as $location) {
-                $locationIds[] = $location->getLocation()->getId();
-            }
+            $locationIds = array_column($locations, 'locationId');
         }
 
         return $locationIds;

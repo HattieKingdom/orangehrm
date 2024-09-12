@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Tests\Attendance\Api;
@@ -41,7 +40,27 @@ class TimezonesAPITest extends EndpointIntegrationTestCase
 
     public function dataProviderForTestGetAll(): array
     {
-        return $this->getTestCases('TimezonesAPITestCases.yaml', 'GetAll');
+        $phpVersion = phpversion();
+        $testCases = $this->getTestCases('TimezonesAPITestCases.yaml', 'GetAll');
+        if (version_compare($phpVersion, '7.4.29', '>=')) {
+            $testCase = &$testCases["Get Timezones by filter(ESS) - tok"][0];
+            $modifiedTimeZone = [
+                "name" => "Antarctica/Vostok",
+                "label" => "+07:00",
+                "offset" => "7.0"
+            ];
+            $timezones = $testCase->getResultData();
+            foreach ($timezones as $key => $timezone) {
+                if ($timezone['name'] === "Antarctica/Vostok") {
+                    $timezones[$key] = $modifiedTimeZone;
+                    break;
+                }
+            }
+            $testCase->setResultData($timezones);
+            return $testCases;
+        } else {
+            return $this->getTestCases('TimezonesAPITestCases.yaml', 'GetAll');
+        }
     }
 
     public function testDelete(): void

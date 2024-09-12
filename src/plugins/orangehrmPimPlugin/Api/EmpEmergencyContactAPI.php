@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -32,8 +31,6 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
-use OrangeHRM\Core\Exception\ServiceException;
 use OrangeHRM\Entity\EmpEmergencyContact;
 use OrangeHRM\Pim\Api\Model\EmpEmergencyContactModel;
 use OrangeHRM\Pim\Dto\EmpEmergencyContactSearchFilterParams;
@@ -78,8 +75,55 @@ class EmpEmergencyContactAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/emergency-contacts",
+     *     tags={"PIM/Employee Emergency Contact"},
+     *     summary="List an Employee's Emergency Contacts",
+     *     operationId="list-an-employees-emergency-contacts",
+     *     description="This endpoint allows you to list an employee's emergency contacts.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="The numerical employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="name",
+     *         description="The name of the desired emergency contact",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_MAX_LENGTH)
+     *     ),
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         description="Sort the emergency contacts by their names",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=EmpEmergencyContactSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Pim-EmpEmergencyContactModel")
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The given numerical employee number of the employee", type="integer"),
+     *                 @OA\Property(property="total", description="The total number of emergency contacts", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
-     * @throws ServiceException
      */
     public function getAll(): EndpointCollectionResult
     {
@@ -135,6 +179,66 @@ class EmpEmergencyContactAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/pim/employees/{empNumber}/emergency-contacts",
+     *     tags={"PIM/Employee Emergency Contact"},
+     *     summary="Add an Emergency Contact to an Employee",
+     *     operationId="add-an-emergency-contact-to-an-employee",
+     *     description="The endpoint allows you to add an emergency contact for a particular employee.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="The numerical employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="name",
+     *                 description="Specify the name of the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="relationship",
+     *                 description="Specify the relationship between the employee and the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="homePhone",
+     *                 description="Specify the home phone number of the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_HOME_PHONE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="officePhone",
+     *                 description="Specfiy the office phone number of the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_OFFICE_PHONE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="mobilePhone",
+     *                 description="Specify the mobile phone number of the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_MOBILE_PHONE_MAX_LENGTH
+     *             ),
+     *             required={"name", "relationship", "homePhone", "officePhone", "mobilePhone"}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmpEmergencyContactModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object", additionalProperties=false)
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function create(): EndpointResourceResult
@@ -165,15 +269,19 @@ class EmpEmergencyContactAPI extends Endpoint implements CrudEndpoint
     private function getCommonBodyValidationRules(): array
     {
         return [
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_MAX_LENGTH])
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_NAME,
+                    new Rule(Rules::STRING_TYPE),
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_MAX_LENGTH])
+                )
             ),
-            new ParamRule(
-                self::PARAMETER_RELATIONSHIP,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_MAX_LENGTH])
+            $this->getValidationDecorator()->requiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_RELATIONSHIP,
+                    new Rule(Rules::STRING_TYPE),
+                    new Rule(Rules::LENGTH, [null, self::PARAM_RULE_MAX_LENGTH])
+                )
             ),
             new ParamRule(
                 self::PARAMETER_HOME_PHONE,
@@ -197,19 +305,34 @@ class EmpEmergencyContactAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/pim/employees/{empNumber}/emergency-contacts",
+     *     tags={"PIM/Employee Emergency Contact"},
+     *     summary="Delete an Employee's Emergency Contacts",
+     *     operationId="delete-an-employees-emergency-contacts",
+     *     description="This endpoint allows you to delete an employee's emergency contacts.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="The numerical employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     * )
+     *
      * @inheritDoc
-     * @throws DaoException
      */
     public function delete(): EndpointResourceResult
     {
-        $sequenceNumbers = $this->getRequestParams()->getArray(
-            RequestParams::PARAM_TYPE_BODY,
-            CommonParams::PARAMETER_IDS
-        );
         $empNumber = $this->getRequestParams()->getInt(
             RequestParams::PARAM_TYPE_ATTRIBUTE,
             CommonParams::PARAMETER_EMP_NUMBER
         );
+        $sequenceNumbers = $this->getEmpEmergencyContactService()->getEmpEmergencyContactDao()->getExistingSeqNosForEmpNumber(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS),
+            $empNumber
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($sequenceNumbers);
         $this->getEmpEmergencyContactService()->deleteEmployeeEmergencyContacts($empNumber, $sequenceNumbers);
         return new EndpointResourceResult(
             ArrayModel::class,
@@ -236,8 +359,40 @@ class EmpEmergencyContactAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/emergency-contacts/{id}",
+     *     tags={"PIM/Employee Emergency Contact"},
+     *     summary="Get an Employee's Emergency Contact",
+     *     operationId="get-an-employees-emergency-contact",
+     *     description="This endpoint allows you to get one of an employee's emergency contacts.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="The numerical employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         description="The numerical ID of the desired emergency contact",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmpEmergencyContactModel"
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *             @OA\Property(property="empNumber", description="The given numerical employee number of the employee", type="integer"))
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
-     * @throws DaoException
      * @throws RecordNotFoundException
      */
     public function getOne(): EndpointResourceResult
@@ -275,6 +430,74 @@ class EmpEmergencyContactAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/emergency-contacts/{id}",
+     *     tags={"PIM/Employee Emergency Contact"},
+     *     summary="Update an Employee's Emergency Contact",
+     *     operationId="update-an-employees-emergency-contact",
+     *     description="This endpoint allows you to update one of an employee's emergency contacts.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="The numerical employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         description="The numerical ID of the desired emergency contact",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="name",
+     *                 description="Specify the name of the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="relationship",
+     *                 description="Specify the relationship between the employee and the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_HOME_PHONE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="homePhone",
+     *                 description="Specify the home phone number of the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_HOME_PHONE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="officePhone",
+     *                 description="Specify the office phone number of the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_OFFICE_PHONE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="mobilePhone",
+     *                 description="Specify the mobile phone number of the emergency contact",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmpEmergencyContactAPI::PARAM_RULE_MOBILE_PHONE_MAX_LENGTH
+     *             ),
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmpEmergencyContactModel"
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The given numerical employee number of the employee", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function update(): EndpointResourceResult
@@ -309,7 +532,6 @@ class EmpEmergencyContactAPI extends Endpoint implements CrudEndpoint
 
     /**
      * @return EmpEmergencyContact
-     * @throws DaoException
      * @throws RecordNotFoundException
      */
     public function saveEmployeeEmergencyContacts(): EmpEmergencyContact

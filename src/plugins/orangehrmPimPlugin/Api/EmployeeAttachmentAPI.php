@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -66,6 +65,46 @@ class EmployeeAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/screen/{screen}/attachments/{id}",
+     *     tags={"PIM/Employee Attachment"},
+     *     summary="Get an Employee's Attachment on a Screen",
+     *     operationId="get-an-employees-attachment-on-a-screen",
+     *     description="This endpoint allows you to get one of an employee's attachments on a particular PIM screen.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="screen",
+     *         description="Specify the name of the desired PIM screen",
+     *         @OA\Schema(type="string", enum=OrangeHRM\Entity\EmployeeAttachment::SCREENS)
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         description="Specify the numerical ID of the attachment",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeAttachmentModel"
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer"),
+     *                 @OA\Property(property="screen", description="The PIM screen name given in the request", type="string", example="personal")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResourceResult
@@ -116,6 +155,43 @@ class EmployeeAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/screen/{screen}/attachments",
+     *     tags={"PIM/Employee Attachment"},
+     *     summary="List an Employee's Attachments on a Screen",
+     *     operationId="list-an-employees-attachments-on-a-screen",
+     *     description="This endpoint allows you the list an employee's attachments for a particular PIM screen.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="screen",
+     *         description="Specify the name of the desired PIM screen",
+     *         @OA\Schema(type="string", enum=OrangeHRM\Entity\EmployeeAttachment::SCREENS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Pim-EmployeeAttachmentModel")
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer"),
+     *                 @OA\Property(property="screen", description="The PIM screen name given in the request", type="string", example="personal")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function getAll(): EndpointCollectionResult
@@ -149,6 +225,50 @@ class EmployeeAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/pim/employees/{empNumber}/screen/{screen}/attachments",
+     *     tags={"PIM/Employee Attachment"},
+     *     summary="Add an Attachment to an Employee on a Screen",
+     *     operationId="add-an-attachment-to-an-employee-on-a-screen",
+     *     description="This endpoint allows you to upload an attachment for a particular employee on a particular PIM screen.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="screen",
+     *         description="Specify the name of the desired PIM screen",
+     *         @OA\Schema(type="string", enum=OrangeHRM\Entity\EmployeeAttachment::SCREENS)
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="description",
+     *                 description="Specify the description of the attachment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeAttachmentAPI::PARAM_RULE_DESCRIPTION_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="attachment", ref="#/components/schemas/Base64Attachment"),
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeAttachmentModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer"),
+     *                 @OA\Property(property="screen", description="The PIM screen name given in the request", type="string", enum=OrangeHRM\Entity\EmployeeAttachment::SCREENS)
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function create(): EndpointResourceResult
@@ -266,6 +386,56 @@ class EmployeeAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/screen/{screen}/attachments/{id}",
+     *     tags={"PIM/Employee Attachment"},
+     *     summary="Update an Employee's Attachment on a Screen",
+     *     operationId="update-an-employees-attachment-on-a-screen",
+     *     description="This endpoint allows you to update an employee's attachment on a particular PIM screen.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="screen",
+     *         description="Specify the name of the desired PIM screen",
+     *         @OA\Schema(type="string", enum=OrangeHRM\Entity\EmployeeAttachment::SCREENS)
+     *     ),
+     *     @OA\PathParameter(
+     *         name="id",
+     *         description="Specify the numerical ID of the attachment",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="description",
+     *                 description="Specify the description of the attachment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeAttachmentAPI::PARAM_RULE_DESCRIPTION_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="attachment", ref="#/components/schemas/Base64Attachment"),
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeAttachmentModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer"),
+     *                 @OA\Property(property="screen", description="The PIM screen name given in the request", type="string", enum=OrangeHRM\Entity\EmployeeAttachment::SCREENS)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function update(): EndpointResourceResult
@@ -322,6 +492,26 @@ class EmployeeAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/pim/employees/{empNumber}/screen/{screen}/attachments",
+     *     tags={"PIM/Employee Attachment"},
+     *     summary="Delete an Employee's Attachments on a Screen",
+     *     operationId="delete-an-employees-attachments-on-a-screen",
+     *     description="This endpoint allows you to delete an employee's attachment on a particular PIM screen.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="screen",
+     *         description="Specify the name of the desired PIM screen",
+     *         @OA\Schema(type="string", enum=OrangeHRM\Entity\EmployeeAttachment::SCREENS)
+     *     ),
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     * )
+     *
      * @inheritDoc
      */
     public function delete(): EndpointResourceResult

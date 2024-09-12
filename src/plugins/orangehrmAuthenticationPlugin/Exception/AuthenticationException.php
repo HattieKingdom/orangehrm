@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Authentication\Exception;
@@ -33,6 +32,8 @@ class AuthenticationException extends Exception
     public const UNEXPECT_ERROR = 'unexpected_error';
     public const PASSWORD_NOT_STRONG = 'password_not_strong';
     public const INVALID_RESET_CODE = 'invalid_password_reset_code';
+    public const NO_USER_FOUND = 'no_user_found';
+    public const MULTIPLE_USER_RETURNED = 'multiple_user_returned';
 
     /**
      * @var string
@@ -98,5 +99,21 @@ class AuthenticationException extends Exception
     public static function invalidCsrfToken(): self
     {
         return new self(self::INVALID_CSRF_TOKEN, 'CSRF token validation failed');
+    }
+
+    /**
+     * @return static
+     */
+    public static function noUserFound(): self
+    {
+        return new self(self::NO_USER_FOUND, 'No User Found');
+    }
+
+    /**
+     * @return static
+     */
+    public static function multipleUserReturned(): self
+    {
+        return new self(self::MULTIPLE_USER_RETURNED, 'Multiple User Returned');
     }
 }

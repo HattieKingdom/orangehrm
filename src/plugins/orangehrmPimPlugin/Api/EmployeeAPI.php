@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -32,6 +31,7 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
+use OrangeHRM\Core\Api\V2\Validator\Rules\EntityUniquePropertyOption;
 use OrangeHRM\Core\Traits\UserRoleManagerTrait;
 use OrangeHRM\Entity\Employee;
 use OrangeHRM\Entity\EmpPicture;
@@ -98,6 +98,45 @@ class EmployeeAPI extends Endpoint implements CrudEndpoint
 
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}",
+     *     tags={"PIM/Employee"},
+     *     summary="Get an Employee",
+     *     operationId="get-an-employee",
+     *     description="This endpoint allows you to retrieve details for a specific employee.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the numerical employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="model",
+     *         description="Specify whether the result should be default or detailed",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={OrangeHRM\Pim\Api\EmployeeAPI::MODEL_DEFAULT, OrangeHRM\Pim\Api\EmployeeAPI::MODEL_DETAILED},
+     *             default=OrangeHRM\Pim\Api\EmployeeAPI::MODEL_DEFAULT
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 oneOf={
+     *                     @OA\Schema(ref="#/components/schemas/Pim-EmployeeModel"),
+     *                     @OA\Schema(ref="#/components/schemas/Pim-EmployeeDetailedModel"),
+     *                 }
+     *             ),
+     *             @OA\Property(property="meta", type="object", additionalProperties=false)
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResourceResult
@@ -150,6 +189,104 @@ class EmployeeAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees",
+     *     tags={"PIM/Employee"},
+     *     summary="List All Employees",
+     *     operationId="list-all-employees",
+     *     description="This endpoint allows you to get a list of employees.",
+     *     @OA\Parameter(
+     *         name="name",
+     *         description="Specify an employee name",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", maxLength=OrangeHRM\Pim\Api\EmployeeAPI::PARAM_RULE_FILTER_NAME_MAX_LENGTH)
+     *     ),
+     *     @OA\Parameter(
+     *         name="nameOrId",
+     *         description="Specify an employee name or employee ID",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", maxLength=OrangeHRM\Pim\Api\EmployeeAPI::PARAM_RULE_FILTER_NAME_OR_ID_MAX_LENGTH)
+     *     ),
+     *     @OA\Parameter(
+     *         name="employeeId",
+     *         description="Specify an employee ID",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer", maxLength=OrangeHRM\Pim\Api\EmployeeAPI::PARAM_RULE_EMPLOYEE_ID_MAX_LENGTH)
+     *     ),
+     *     @OA\Parameter(
+     *         name="jobTitleId",
+     *         description="Specify a job title ID",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="subunitId",
+     *         description="Specify a subunit ID",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="empStatusId",
+     *         description="Specify an employee status ID",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="includeEmployees",
+     *         description="Specify whether to search current employees, past employees or all employees",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer", enum=OrangeHRM\Pim\Dto\EmployeeSearchFilterParams::INCLUDE_EMPLOYEES_MAP)
+     *     ),
+     *     @OA\Parameter(
+     *         name="model",
+     *         description="Specify whether the result should be default or detailed",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={OrangeHRM\Pim\Api\EmployeeAPI::MODEL_DEFAULT, OrangeHRM\Pim\Api\EmployeeAPI::MODEL_DETAILED},
+     *             default=OrangeHRM\Pim\Api\EmployeeAPI::MODEL_DEFAULT
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         description="Sort the employee list by last name, first name, middle name, employee number, employee ID, job title name, employee status name, subunit name or supervisor's first name",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=EmployeeSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     oneOf={
+     *                         @OA\Schema(ref="#/components/schemas/Pim-EmployeeModel"),
+     *                         @OA\Schema(ref="#/components/schemas/Pim-EmployeeDetailedModel"),
+     *                     }
+     *                 )
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="total", description="The total number of employees", type="integer")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function getAll(): EndpointCollectionResult
@@ -303,6 +440,72 @@ class EmployeeAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/pim/employees",
+     *     tags={"PIM/Employee"},
+     *     summary="Create an Employee",
+     *     operationId="create-an-employee",
+     *     description="This endpoint allows you to create an employee.",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="lastName",
+     *                 description="Specify the employee's last name",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeAPI::PARAM_RULE_LAST_NAME_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="firstName",
+     *                 description="Specify the employee's first name",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeAPI::PARAM_RULE_FIRST_NAME_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="middleName",
+     *                 description="Specify the employee's middle name",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeAPI::PARAM_RULE_MIDDLE_NAME_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="employeeId",
+     *                 description="Specify the employeee's ID",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\EmployeeAPI::PARAM_RULE_EMPLOYEE_ID_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="empPicture",
+     *                 description="Upload a profile picture for the employee",
+     *                 ref="#/components/schemas/Base64Attachment",
+     *             ),
+     *             required={"firstName", "lastName"}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object", additionalProperties=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="400",
+     *         description="Bad Request",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="status", type="string", default="400"),
+     *                 @OA\Property(property="message", type="string", example="Logged in User Not Allowed to Create an Employee")
+     *             )
+     *         )
+     *     )
+     * )
+     *
      * @inheritDoc
      */
     public function create(): EndpointResourceResult
@@ -373,6 +576,11 @@ class EmployeeAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForCreate(): ParamRuleCollection
     {
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setMatchValues([
+            'purgedAt' => null
+        ]);
+
         return new ParamRuleCollection(
             $this->getValidationDecorator()->notRequiredParamRule(
                 new ParamRule(
@@ -383,14 +591,15 @@ class EmployeeAPI extends Endpoint implements CrudEndpoint
                     )
                 ),
             ),
-            ...$this->getCommonBodyValidationRules(),
+            ...$this->getCommonBodyValidationRules($uniqueOption),
         );
     }
 
     /**
+     * @param EntityUniquePropertyOption|null $uniqueOption
      * @return ParamRule[]
      */
-    private function getCommonBodyValidationRules(): array
+    private function getCommonBodyValidationRules(?EntityUniquePropertyOption $uniqueOption = null): array
     {
         return [
             $this->getValidationDecorator()->requiredParamRule(
@@ -420,6 +629,7 @@ class EmployeeAPI extends Endpoint implements CrudEndpoint
                     self::PARAMETER_EMPLOYEE_ID,
                     new Rule(Rules::STRING_TYPE),
                     new Rule(Rules::LENGTH, [null, self::PARAM_RULE_EMPLOYEE_ID_MAX_LENGTH]),
+                    new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [Employee::class, 'employeeId', $uniqueOption])
                 ),
                 true
             ),
@@ -443,11 +653,37 @@ class EmployeeAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/pim/employees",
+     *     tags={"PIM/Employee"},
+     *     summary="Delete Employees",
+     *     operationId="delete-employees",
+     *     description="This endpoint allows you to delete employee's from the system. Note that this is different from terminating employees.",
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(
+     *         response="400",
+     *         description="Bad Request - Employees not accessible",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="status", type="string", default="400"),
+     *                 @OA\Property(property="messsage", type="string", default="Employees not accessible")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function delete(): EndpointResourceResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getEmployeeService()->getEmployeeDao()->getExistingEmpNumbers(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         if (!$this->getUserRoleManager()->areEntitiesAccessible(Employee::class, $ids)) {
             throw $this->getBadRequestException('Employees not accessible');
         }
@@ -478,6 +714,7 @@ class EmployeeAPI extends Endpoint implements CrudEndpoint
         return new ParamRuleCollection(
             new ParamRule(
                 CommonParams::PARAMETER_IDS,
+                new Rule(Rules::ARRAY_TYPE),
                 new Rule(
                     Rules::EACH,
                     [

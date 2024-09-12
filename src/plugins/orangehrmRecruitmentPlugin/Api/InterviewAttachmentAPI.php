@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Recruitment\Api;
@@ -58,6 +57,42 @@ class InterviewAttachmentAPI extends Endpoint implements CrudEndpoint
     public const INTERVIEW_ATTACHMENT_REPLACE_CURRENT = 'replaceCurrent';
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/recruitment/interviews/{interviewId}/attachments",
+     *     tags={"Recruitment/Interview Attachments"},
+     *     summary="List All Interview Attachments",
+     *     operationId="list-all-interview-attachments",
+     *     @OA\PathParameter(
+     *         name="interviewId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=InterviewAttachmentSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Recruitment-InterviewAttachmentModel"
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getAll(): EndpointResult
@@ -104,6 +139,40 @@ class InterviewAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/recruitment/interviews/{interviewId}/attachments",
+     *     tags={"Recruitment/Interview Attachments"},
+     *     summary="Add an Attachment to an Interview",
+     *     operationId="add-an-attachment-to-an-interview",
+     *     @OA\PathParameter(
+     *         name="interviewId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="comment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Recruitment\Api\InterviewAttachmentAPI::PARAM_RULE_COMMENT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="attachment", ref="#/components/schemas/Base64Attachment"),
+     *             required={"attachment"}
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Recruitment-InterviewAttachmentModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function create(): EndpointResult
@@ -202,6 +271,19 @@ class InterviewAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/recruitment/interviews/{interviewId}/attachments",
+     *     tags={"Recruitment/Interview Attachments"},
+     *     summary="Delete Interview Attachments",
+     *     operationId="delete-interview-attachments",
+     *     @OA\PathParameter(
+     *         name="interviewId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     * )
+     *
      * @inheritDoc
      */
     public function delete(): EndpointResult
@@ -210,10 +292,13 @@ class InterviewAttachmentAPI extends Endpoint implements CrudEndpoint
             RequestParams::PARAM_TYPE_ATTRIBUTE,
             self::PARAMETER_INTERVIEW_ID
         );
-        $toBeDeletedAttachmentIds = $this->getRequestParams()->getArray(
-            RequestParams::PARAM_TYPE_BODY,
-            CommonParams::PARAMETER_IDS
-        );
+        $toBeDeletedAttachmentIds = $this->getRecruitmentAttachmentService()
+            ->getRecruitmentAttachmentDao()
+            ->getExistingInterviewAttachmentIdsForInterview(
+                $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS),
+                $interviewId
+            );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($toBeDeletedAttachmentIds);
         $this->getRecruitmentAttachmentService()
             ->getRecruitmentAttachmentDao()
             ->deleteInterviewAttachments($interviewId, $toBeDeletedAttachmentIds);
@@ -238,6 +323,34 @@ class InterviewAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * * @OA\Get(
+     *     path="/api/v2/recruitment/interviews/{interviewId}/attachments/{attachmentId}",
+     *     tags={"Recruitment/Interview Attachments"},
+     *     summary="Get an Interview Attachment",
+     *     operationId="get-an-interview-attachment",
+     *     @OA\PathParameter(
+     *         name="interviewId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="attachmentId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Recruitment-InterviewAttachmentModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResult
@@ -276,6 +389,48 @@ class InterviewAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/recruitment/interviews/{interviewId}/attachments/{attachmentId}",
+     *     tags={"Recruitment/Interview Attachments"},
+     *     summary="Update an Interview Attachment",
+     *     operationId="update-an-interview-attachment",
+     *     @OA\PathParameter(
+     *         name="interviewId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="attachmentId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="currentAttachment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Recruitment\Api\InterviewAttachmentAPI::PARAM_RULE_CURRENT_ATTACHMENT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="attachment", ref="#/components/schemas/Base64Attachment"),
+     *             @OA\Property(
+     *                 property="comment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Recruitment\Api\InterviewAttachmentAPI::PARAM_RULE_COMMENT_MAX_LENGTH
+     *             ),
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Recruitment-InterviewAttachmentModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function update(): EndpointResult

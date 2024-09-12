@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Api\Model;
@@ -24,6 +23,38 @@ use OrangeHRM\Core\Traits\Service\DateTimeHelperTrait;
 use OrangeHRM\Core\Traits\Service\NormalizerServiceTrait;
 use OrangeHRM\Leave\Dto\LeaveRequest\DetailedLeave;
 
+/**
+ * @OA\Schema(
+ *     schema="Leave-LeaveDetailedModel",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="dates", type="object",
+ *         @OA\Property(property="fromDate", type="string", format="date"),
+ *         @OA\Property(property="toDate", type="string", format="date"),
+ *         @OA\Property(property="durationType", type="object",
+ *             @OA\Property(property="id", type="integer"),
+ *             @OA\Property(property="type", type="string"),
+ *         ),
+ *     @OA\Property(property="startTime", type="string", format="time")),
+ * @OA\Property(property="endTime", type="string", format="time")),
+ *     ),
+ * @OA\Property(property="lengthHours", type="integer"),
+ * @OA\Property(property="leaveBalance", type="object"),
+ * @OA\Property(property="leaveStatus", type="object"),
+ * @OA\Property(property="allowedActions", type="object"),
+ * @OA\Property(property="leaveType", type="object",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="deleted", type="boolean"),
+ * ),
+ * @OA\Property(property="lastComment", type="object",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="comment", type="string"),
+ *     @OA\Property(property="date", type="string", format="date"),
+ *     @OA\Property(property="time", type="string", format="time"),
+ * ),
+ * )
+ */
 class LeaveDetailedModel implements Normalizable
 {
     use DateTimeHelperTrait;

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -67,6 +66,49 @@ class EmployeeCustomFieldAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/custom-fields",
+     *     tags={"PIM/Employee Custom Field"},
+     *     summary="List an Employee's Custom Fields",
+     *     operationId="list-an-employees-custom-fields",
+     *     description="This endpoint allows you to list the custom field values for a particular employee.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee.",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="screen",
+     *         description="Specify the name of the desired PIM screen",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer", enum=OrangeHRM\Entity\CustomField::SCREENS)
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 description="An object contaning the values of each custom field",
+     *                 type="object",
+     *                 additionalProperties=true
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer"),
+     *                 @OA\Property(
+     *                     property="fields",
+     *                     description="An array containg the details of each custom field",
+     *                     type="array",
+     *                     @OA\Items(ref="#/components/schemas/Pim-CustomFieldModel")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResourceResult
@@ -171,6 +213,54 @@ class EmployeeCustomFieldAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/custom-fields",
+     *     tags={"PIM/Employee Custom Field"},
+     *     summary="Update an Employee's Custom Fields",
+     *     operationId="update-an-employees-custom-fields",
+     *     description="This endpoint allows you to update the custom field values for a particular employee.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             description="An object in the format of 'customField':'value'. Note that the custom fields are labelled custom1 to custom10",
+     *             additionalProperties=true,
+     *             example={
+     *                 "custom1" : "Field1",
+     *                 "custom2" : "Field2"
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 description="An object containing the values of each custom field",
+     *                 type="object",
+     *                 additionalProperties=true
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer"),
+     *                 @OA\Property(
+     *                     property="fields",
+     *                     description="An array containg the details of each custom field",
+     *                     type="array",
+     *                     @OA\Items(ref="#/components/schemas/Pim-CustomFieldModel")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function update(): EndpointResourceResult

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Claim\Dao;
@@ -87,6 +86,23 @@ class ClaimDao extends BaseDao
     public function getClaimEventById(int $id): ?ClaimEvent
     {
         return $this->getRepository(ClaimEvent::class)->findOneBy(['id' => $id, 'isDeleted' => false]);
+    }
+
+    /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingClaimEventIds(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(ClaimEvent::class, 'claimEvent');
+
+        $qb->select('claimEvent.id')
+            ->andWhere($qb->expr()->in('claimEvent.id', ':ids'))
+            ->andWhere($qb->expr()->eq('claimEvent.isDeleted', ':isDeleted'))
+            ->setParameter('ids', $ids)
+            ->setParameter('isDeleted', false);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**
@@ -201,6 +217,23 @@ class ClaimDao extends BaseDao
 
     /**
      * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingExpenseTypeIds(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(ExpenseType::class, 'expenseType');
+
+        $qb->select('expenseType.id')
+            ->andWhere($qb->expr()->in('expenseType.id', ':ids'))
+            ->andWhere($qb->expr()->eq('expenseType.isDeleted', ':isDeleted'))
+            ->setParameter('ids', $ids)
+            ->setParameter('isDeleted', false);
+
+        return $qb->getQuery()->getSingleColumnResult();
+    }
+
+    /**
+     * @param int[] $ids
      * @return int
      */
     public function deleteExpenseTypes(array $ids): int
@@ -304,6 +337,25 @@ class ClaimDao extends BaseDao
     public function getClaimRequestById(int $id): ?ClaimRequest
     {
         return $this->getRepository(ClaimRequest::class)->findOneBy(['id' => $id, 'isDeleted' => false]);
+    }
+
+    /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingClaimExpenseIdsForRequestId(array $ids, int $requestId): array
+    {
+        $qb = $this->createQueryBuilder(ClaimExpense::class, 'claimExpense');
+
+        $qb->select('claimExpense.id')
+            ->andWhere($qb->expr()->in('claimExpense.id', ':ids'))
+            ->andWhere($qb->expr()->eq('claimExpense.claimRequest', ':requestId'))
+            ->andWhere($qb->expr()->eq('claimExpense.isDeleted', ':isDeleted'))
+            ->setParameter('ids', $ids)
+            ->setParameter('requestId', $requestId)
+            ->setParameter('isDeleted', false);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**
@@ -439,6 +491,24 @@ class ClaimDao extends BaseDao
         return $this->getRepository(ClaimAttachment::class)->findOneBy(
             ['requestId' => $requestId, 'attachId' => $attachId]
         );
+    }
+
+    /**
+     * @param int[] $ids
+     * @param int $requestId
+     * @return int[]
+     */
+    public function getExistingClaimAttachmentIdsForRequestId(array $ids, int $requestId): array
+    {
+        $qb = $this->createQueryBuilder(ClaimAttachment::class, 'claimAttachment');
+
+        $qb->select('claimAttachment.attachId')
+            ->andWhere($qb->expr()->eq('claimAttachment.requestId', ':requestId'))
+            ->andWhere($qb->expr()->in('claimAttachment.attachId', ':ids'))
+            ->setParameter('requestId', $requestId)
+            ->setParameter('ids', $ids);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**

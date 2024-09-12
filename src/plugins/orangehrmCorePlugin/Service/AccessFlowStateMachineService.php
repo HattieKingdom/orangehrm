@@ -4,23 +4,21 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Core\Service;
 
 use OrangeHRM\Core\Dao\AccessFlowStateMachineDao;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\WorkflowStateMachine;
 
 class AccessFlowStateMachineService
@@ -60,7 +58,6 @@ class AccessFlowStateMachineService
      * @param string|null $state
      * @param string $role
      * @return array|null
-     * @throws DaoException
      */
     public function getAllowedActions(string $workflow, ?string $state, string $role): ?array
     {
@@ -83,7 +80,6 @@ class AccessFlowStateMachineService
      * @param string|null $state
      * @param string $role
      * @return WorkflowStateMachine[]
-     * @throws DaoException
      */
     public function getAllowedWorkflowItems(string $workflow, ?string $state, string $role): array
     {
@@ -118,7 +114,6 @@ class AccessFlowStateMachineService
      * @param string $role
      * @param string $action
      * @return string|null
-     * @throws DaoException
      */
     public function getNextState(string $workflow, string $state, string $role, string $action): ?string
     {
@@ -134,7 +129,6 @@ class AccessFlowStateMachineService
      * @param string $workflow
      * @param string $role
      * @return array|null
-     * @throws DaoException
      */
     public function getAllAlowedRecruitmentApplicationStates(string $workflow, string $role): ?array
     {
@@ -157,7 +151,6 @@ class AccessFlowStateMachineService
      * @param string $role
      * @param array $actions
      * @return array|null
-     * @throws DaoException
      */
     public function getActionableStates(string $workflow, string $role, array $actions): ?array
     {
@@ -178,7 +171,6 @@ class AccessFlowStateMachineService
      * @param string $workflow
      * @param string|null $role
      * @return WorkflowStateMachine[]
-     * @throws DaoException
      */
     public function getWorkFlowStateMachineRecords(string $workflow, ?string $role = null): array
     {
@@ -188,7 +180,6 @@ class AccessFlowStateMachineService
     /**
      * @param WorkflowStateMachine $workflowStateMachineRecord
      * @return WorkflowStateMachine
-     * @throws DaoException
      */
     public function saveWorkflowStateMachineRecord(WorkflowStateMachine $workflowStateMachineRecord): WorkflowStateMachine
     {
@@ -199,7 +190,6 @@ class AccessFlowStateMachineService
      * set workflow records form array
      * @param WorkflowStateMachine[] $workflowStateMachineRecordArray
      * @return WorkflowStateMachine[]
-     * @throws DaoException
      */
     public function saveWorkflowStateMachineRecordAsArray(array $workflowStateMachineRecordArray): array
     {
@@ -213,7 +203,6 @@ class AccessFlowStateMachineService
      * @param string $action
      * @param string $resultingState
      * @return bool
-     * @throws DaoException
      */
     public function deleteWorkflowStateMachineRecord(string $workflow, string $state, string $role, string $action, string $resultingState): bool
     {
@@ -257,7 +246,6 @@ class AccessFlowStateMachineService
     /**
      * @param int $id
      * @return WorkflowStateMachine|null
-     * @throws DaoException
      */
     public function getWorkflowItem(int $id): ?WorkflowStateMachine
     {
@@ -270,7 +258,6 @@ class AccessFlowStateMachineService
      * @param string $action
      * @param string $role
      * @return WorkflowStateMachine|null
-     * @throws DaoException
      */
     public function getWorkflowItemByStateActionAndRole(
         string $workflow,
@@ -290,7 +277,6 @@ class AccessFlowStateMachineService
      * @param string|null $workflow
      * @param string $role
      * @return int
-     * @throws DaoException
      */
     public function deleteWorkflowRecordsForUserRole(?string $workflow, string $role): int
     {
@@ -301,7 +287,6 @@ class AccessFlowStateMachineService
      * @param string $oldRoleName
      * @param string $newRoleName
      * @return int
-     * @throws DaoException
      */
     public function handleUserRoleRename(string $oldRoleName, string $newRoleName): int
     {

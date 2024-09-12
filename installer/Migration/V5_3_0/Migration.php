@@ -4,21 +4,21 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Installer\Migration\V5_3_0;
 
+use Exception;
 use DateTime;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
@@ -27,11 +27,20 @@ use Doctrine\DBAL\Types\Types;
 use OrangeHRM\Core\Service\DateTimeHelperService;
 use OrangeHRM\Installer\Util\Logger;
 use OrangeHRM\Installer\Util\V1\AbstractMigration;
+use OrangeHRM\Installer\Util\V1\LangStringHelper;
 
 class Migration extends AbstractMigration
 {
     protected ?LangStringHelper $langStringHelper = null;
     private DateTimeZone $utcTimeZone;
+    public const CONFLICTING_FOREIGN_KEY_TABLES = [
+        'ohrm_buzz_comment',
+        'ohrm_buzz_like_on_comment',
+        'ohrm_buzz_like_on_share',
+        'ohrm_buzz_photo',
+        'ohrm_buzz_post',
+        'ohrm_buzz_share',
+    ];
 
     /**
      * @inheritDoc
@@ -49,7 +58,7 @@ class Migration extends AbstractMigration
         $this->getLangStringHelper()->deleteNonCustomizedLangStrings('buzz');
         $oldGroups = ['buzz', 'general', 'dashboard', 'help'];
         foreach ($oldGroups as $group) {
-            $this->getLangStringHelper()->insertOrUpdateLangStrings($group);
+            $this->getLangStringHelper()->insertOrUpdateLangStrings(__DIR__, $group);
         }
         $this->updateLangStringVersion($this->getVersion());
 
@@ -156,7 +165,8 @@ class Migration extends AbstractMigration
             'ALTER TABLE ohrm_buzz_comment CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
 
-        $this->getSchemaHelper()->disableConstraints();
+        $conflictingConstraints = $this->getConflictingForeignKeys();
+        $droppedConstraintNames = $this->removeConflictingForeignKeys($conflictingConstraints);
         $this->getSchemaHelper()->addOrChangeColumns('ohrm_buzz_comment', [
             'employee_number' => [
                 'Notnull' => true,
@@ -322,7 +332,56 @@ class Migration extends AbstractMigration
                 'Default' => null,
             ],
         ]);
-        $this->getSchemaHelper()->enableConstraints();
+        $this->recreateRemovedForeignKeys($conflictingConstraints, $droppedConstraintNames);
+    }
+
+    /**
+     * @return array
+     */
+    private function getConflictingForeignKeys(): array
+    {
+        $foreignKeyArray = [];
+        foreach (self::CONFLICTING_FOREIGN_KEY_TABLES as $table) {
+            $tableDetails = $this->getSchemaManager()->listTableDetails($table);
+            $foreignKeys = $tableDetails->getForeignKeys();
+            foreach ($foreignKeys as $constraintName => $constraint) {
+                if ($constraint->getForeignTableName() == 'hs_hr_employee') {
+                    $foreignKeyArray[$constraintName] = ['constraint' => $constraint, 'localTable' => $table];
+                }
+            }
+        }
+        return $foreignKeyArray;
+    }
+
+    /**
+     * @param array $conflictingConstraints
+     * @return String[]
+     */
+    private function removeConflictingForeignKeys(array $conflictingConstraints): array
+    {
+        $droppedConstraintNames = [];
+        foreach ($conflictingConstraints as $constraintName => $conflictingConstraint) {
+            try {
+                $this->getSchemaHelper()->dropForeignKeys($conflictingConstraint['localTable'], [$constraintName]);
+                $droppedConstraintNames[] = $constraintName;
+            } catch (Exception $exception) {
+                Logger::getLogger()->error($exception->getMessage());
+            }
+        }
+        return $droppedConstraintNames;
+    }
+
+    /**
+     * @param array $conflictingConstraints
+     * @param String[] $droppedConstraintNames
+     */
+    private function recreateRemovedForeignKeys(array $conflictingConstraints, array $droppedConstraintNames): void
+    {
+        foreach ($conflictingConstraints as $constraintName =>  $conflictingConstraint) {
+            if (in_array($constraintName, $droppedConstraintNames)) {
+                $this->getSchemaHelper()->addForeignKey($conflictingConstraint['localTable'], $conflictingConstraint['constraint']);
+            }
+        }
     }
 
     private function changeBuzzTablesDateTimeColumnsAsNotNull(): void

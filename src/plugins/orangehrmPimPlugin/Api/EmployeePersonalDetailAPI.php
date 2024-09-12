@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -72,6 +71,29 @@ class EmployeePersonalDetailAPI extends Endpoint implements ResourceEndpoint
     public const PARAM_RULE_SIN_NUMBER_MAX_LENGTH = 100;
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/personal-details",
+     *     tags={"PIM/Employee Personal Details"},
+     *     summary="Get an Employee's Personal Details",
+     *     operationId="get-an-employees-personal-details",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeePersonalDetailModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResourceResult
@@ -97,6 +119,50 @@ class EmployeePersonalDetailAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/personal-details",
+     *     tags={"PIM/Employee Personal Details"},
+     *     summary="Update an Employee's Personal Details",
+     *     operationId="update-an-employees-personal-details",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="lastName", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_LAST_NAME_MAX_LENGTH),
+     *             @OA\Property(property="firstName", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_FIRST_NAME_MAX_LENGTH),
+     *             @OA\Property(property="middleName", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_MIDDLE_NAME_MAX_LENGTH),
+     *             @OA\Property(property="employeeId", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_EMPLOYEE_ID_MAX_LENGTH),
+     *             @OA\Property(property="otherId", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_OTHER_ID_MAX_LENGTH),
+     *             @OA\Property(property="drivingLicenseNo", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_DRIVING_LICENSE_NO_MAX_LENGTH),
+     *             @OA\Property(property="drivingLicenseExpiredDate", type="string", format="date"),
+     *             @OA\Property(property="ssnNumber", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_SSN_NUMBER_MAX_LENGTH),
+     *             @OA\Property(property="sinNumber", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_SIN_NUMBER_MAX_LENGTH),
+     *             @OA\Property(property="gender", type="integer"),
+     *             @OA\Property(property="maritalStatus", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_MARTIAL_STATUS_MAX_LENGTH),
+     *             @OA\Property(property="birthday", type="string", format="date"),
+     *             @OA\Property(property="nationalityId", type="integer"),
+     *             @OA\Property(property="nickname", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_NICKNAME_MAX_LENGTH),
+     *             @OA\Property(property="smoker", type="boolean"),
+     *             @OA\Property(property="militaryService", type="string", maxLength=OrangeHRM\Pim\Api\EmployeePersonalDetailAPI::PARAM_RULE_MILITARY_SERVICE_MAX_LENGTH),
+     *             required={"lastName", "firstName"},
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeDependentModel"
+     *             ),
+     *             @OA\Property(property="empNumber", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function update(): EndpointResourceResult

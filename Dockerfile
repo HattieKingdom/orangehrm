@@ -1,7 +1,7 @@
-FROM php:8.1-apache-bullseye
+FROM php:8.3-apache-bookworm
 
-ENV OHRM_VERSION 5.5
-ENV OHRM_MD5 113e76fa9dd42a03f2b6a397fa2ffbc8
+ENV OHRM_VERSION 5.7
+ENV OHRM_MD5 5bd924a546e29e06c34eec73b014d139
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
@@ -45,7 +45,7 @@ RUN set -ex; \
 	apt-mark auto '.*' > /dev/null; \
 	apt-mark manual $savedAptMark; \
 	ldd "$(php -r 'echo ini_get("extension_dir");')"/*.so \
-		| awk '/=>/ { print $3 }' \
+		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
 		| sort -u \
 		| xargs -r dpkg-query -S \
 		| cut -d: -f1 \

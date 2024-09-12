@@ -4,22 +4,20 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Service;
 
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\TerminationReason;
 use OrangeHRM\Pim\Dao\TerminationReasonConfigurationDao;
 use OrangeHRM\Pim\Dto\TerminationReasonConfigurationSearchFilterParams;
@@ -53,7 +51,6 @@ class TerminationReasonConfigurationService
     /**
      * @param TerminationReason $terminationReason
      * @return TerminationReason
-     * @throws DaoException
      */
     public function saveTerminationReason(TerminationReason $terminationReason): TerminationReason
     {
@@ -63,7 +60,6 @@ class TerminationReasonConfigurationService
     /**
      * @param int $id
      * @return TerminationReason|null
-     * @throws DaoException
      */
     public function getTerminationReasonById(int $id): ?TerminationReason
     {
@@ -73,7 +69,6 @@ class TerminationReasonConfigurationService
     /**
      * @param string $name
      * @return TerminationReason|null
-     * @throws DaoException
      */
     public function getTerminationReasonByName(string $name): ?TerminationReason
     {
@@ -83,7 +78,6 @@ class TerminationReasonConfigurationService
     /**
      * @param TerminationReasonConfigurationSearchFilterParams $terminationReasonConfigurationSearchFilterParams
      * @return array
-     * @throws DaoException
      */
     public function getTerminationReasonList(
         TerminationReasonConfigurationSearchFilterParams $terminationReasonConfigurationSearchFilterParams
@@ -94,7 +88,6 @@ class TerminationReasonConfigurationService
     /**
      * @param TerminationReasonConfigurationSearchFilterParams $terminationReasonConfigurationSearchFilterParams
      * @return int
-     * @throws DaoException
      */
     public function getTerminationReasonCount(TerminationReasonConfigurationSearchFilterParams $terminationReasonConfigurationSearchFilterParams): int
     {
@@ -104,7 +97,6 @@ class TerminationReasonConfigurationService
     /**
      * @param array $toDeleteIds
      * @return int
-     * @throws DaoException
      */
     public function deleteTerminationReasons(array $toDeleteIds): int
     {
@@ -114,7 +106,6 @@ class TerminationReasonConfigurationService
     /**
      * @param string $terminationReasonName
      * @return bool
-     * @throws DaoException
      */
     public function isExistingTerminationReasonName(string $terminationReasonName): bool
     {
@@ -123,7 +114,6 @@ class TerminationReasonConfigurationService
 
     /**
      * @return array
-     * @throws DaoException
      */
     public function getReasonIdsInUse(): array
     {

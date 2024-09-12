@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Recruitment\Api\Model;
@@ -26,6 +25,53 @@ use OrangeHRM\Entity\CandidateHistory;
 use OrangeHRM\Entity\Employee;
 use OrangeHRM\Recruitment\Traits\Service\CandidateServiceTrait;
 
+/**
+ * @OA\Schema(
+ *     schema="Recruitment-CandidateHistoryListModel",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(
+ *         property="action",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer"),
+ *         @OA\Property(property="label", type="string")
+ *     ),
+ *     @OA\Property(property="vacancyName", type="string"),
+ *     @OA\Property(
+ *         property="performedBy",
+ *         type="object",
+ *         @OA\Property(property="empNumber", type="integer"),
+ *         @OA\Property(property="lastName", type="string"),
+ *         @OA\Property(property="firstName", type="string"),
+ *         @OA\Property(property="middleName", type="string"),
+ *         @OA\Property(property="terminationId", type="integer")
+ *     ),
+ *     @OA\Property(property="performedDate", type="string", format="date"),
+ *     @OA\Property(property="note", type="string"),
+ *     @OA\Property(property="editable", type="boolean"),
+ *     @OA\Property(
+ *         property="interview",
+ *         type="object",
+ *         nullable=true,
+ *         @OA\Property(property="id", type="integer"),
+ *         @OA\Property(property="name", type="string"),
+ *         @OA\Property(property="date", type="string", format="date"),
+ *         @OA\Property(property="time", type="string", format="time"),
+ *         @OA\Property(
+ *             property="interviewers",
+ *             type="array",
+ *             @OA\Items(
+ *                 type="object",
+ *                 @OA\Property(property="empNumber", type="integer"),
+ *                 @OA\Property(property="firstName", type="string"),
+ *                 @OA\Property(property="middleName", type="string"),
+ *                 @OA\Property(property="lastName", type="string"),
+ *                 @OA\Property(property="terminationId", type="integer"),
+ *             )
+ *         )
+ *     )
+ * )
+ */
 class CandidateHistoryListModel implements Normalizable
 {
     use ModelTrait {

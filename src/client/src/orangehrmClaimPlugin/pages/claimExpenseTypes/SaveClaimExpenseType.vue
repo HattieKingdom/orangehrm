@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -79,6 +78,7 @@ import {
 import {OxdSwitchInput} from '@ohrm/oxd';
 import {navigate} from '@ohrm/core/util/helper/navigation';
 import {APIService} from '@/core/util/services/api.service';
+import useServerValidation from '@/core/util/composable/useServerValidation';
 
 const initialExpenseTypes = {
   name: '',
@@ -95,8 +95,18 @@ export default {
       window.appGlobal.baseUrl,
       '/api/v2/claim/expenses/types',
     );
+    const {createUniqueValidator} = useServerValidation(http);
+    const expenseTypeNameUniqueValidation = createUniqueValidator(
+      'ExpenseType',
+      'name',
+      {
+        matchByField: 'isDeleted',
+        matchByValue: 'false',
+      },
+    );
     return {
       http,
+      expenseTypeNameUniqueValidation,
     };
   },
 
@@ -105,28 +115,14 @@ export default {
       isLoading: false,
       expenseTypes: {...initialExpenseTypes},
       rules: {
-        name: [required, shouldNotExceedCharLength(100)],
+        name: [
+          required,
+          this.expenseTypeNameUniqueValidation,
+          shouldNotExceedCharLength(100),
+        ],
         description: [shouldNotExceedCharLength(1000)],
       },
     };
-  },
-
-  created() {
-    this.isLoading = true;
-    this.http
-      .getAll({limit: 0})
-      .then((response) => {
-        const {data} = response.data;
-        this.rules.name.push((v) => {
-          const index = data.findIndex(
-            (item) => item.name.toLowerCase() == v.trim().toLowerCase(),
-          );
-          return index === -1 || this.$t('general.already_exists');
-        });
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
   },
 
   methods: {

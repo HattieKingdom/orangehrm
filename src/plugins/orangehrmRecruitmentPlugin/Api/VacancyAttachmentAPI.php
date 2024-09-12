@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Recruitment\Api;
@@ -75,6 +74,40 @@ class VacancyAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/recruitment/vacancy/attachments",
+     *     tags={"Recruitment/Vacancy Attachments"},
+     *     summary="Add an Attachment to a Vacancy",
+     *     operationId="add-an-attachment-to-a-vacancy",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="vacancyId", type="integer"),
+     *             @OA\Property(
+     *                 property="comment",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Recruitment\Api\VacancyAttachmentAPI::PARAM_RULE_COMMENT_MAX_LENGTH
+     *             ),
+     *             @OA\Property(
+     *                 property="attachmentType",
+     *                 type="integer",
+     *                 maximum=OrangeHRM\Recruitment\Api\VacancyAttachmentAPI::PARAM_RULE_ATTACHMENT_TYPE_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="attachment", ref="#/components/schemas/Base64Attachment"),
+     *             required={"vacancyId", "attachment"}
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Recruitment-VacancyAttachmentModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
      * @inheritDoc
      */
     public function create(): EndpointResult
@@ -192,14 +225,25 @@ class VacancyAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/recruitment/vacancy/attachments",
+     *     tags={"Recruitment/Vacancy Attachments"},
+     *     summary="Delete Vacancy Attachments",
+     *     operationId="delete-vacancy-attachments",
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
-        $this->getRecruitmentAttachmentService()
-            ->getRecruitmentAttachmentDao()
-            ->deleteVacancyAttachments($ids);
+        $ids = $this->getRecruitmentAttachmentService()->getRecruitmentAttachmentDao()->getExistingVacancyAttachmentIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
+        $this->getRecruitmentAttachmentService()->getRecruitmentAttachmentDao()->deleteVacancyAttachments($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }
 
@@ -211,6 +255,29 @@ class VacancyAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/recruitment/vacancies/{vacancyId}/attachments",
+     *     tags={"Recruitment/Vacancy Attachments"},
+     *     summary="Get a Vacancy Attachment",
+     *     operationId="get-a-vacancy-attachment",
+     *     @OA\PathParameter(
+     *         name="vacancyId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Recruitment-VacancyAttachmentModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResult
@@ -258,6 +325,42 @@ class VacancyAttachmentAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/recruitment/vacancies/{vacancyId}/attachments/{attachmentId}",
+     *     tags={"Recruitment/Vacancy Attachments"},
+     *     summary="Update a Vacancy Attachment",
+     *     operationId="update-a-vacancy-attachment",
+     *     @OA\PathParameter(
+     *         name="attachmentId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="vacancyId",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="currentAttachment", type="string"),
+     *             @OA\Property(property="attachment", ref="#/components/schemas/Base64Attachment"),
+     *             @OA\Property(property="vacancyId", type="integer"),
+     *             @OA\Property(property="comment", type="string"),
+     *             @OA\Property(property="attachmentType", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Recruitment-VacancyAttachmentModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function update(): EndpointResult

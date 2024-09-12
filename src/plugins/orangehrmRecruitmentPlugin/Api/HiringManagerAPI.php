@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Recruitment\Api;
@@ -41,6 +40,37 @@ class HiringManagerAPI extends Endpoint implements CollectionEndpoint
     use UserRoleManagerTrait;
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/recruitment/hiring-managers",
+     *     tags={"Recruitment/Hiring Managers"},
+     *     summary="List Available Employees for Hiring Manager",
+     *     operationId="list-available-employees-for-hiring-manager",
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=EmployeeSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeModel"
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     )
+     * )
+     *
      * @inheritDoc
      */
     public function getAll(): EndpointResult
@@ -48,16 +78,9 @@ class HiringManagerAPI extends Endpoint implements CollectionEndpoint
         $accessibleVacancyIds = $this->getUserRoleManager()->getAccessibleEntityIds(Vacancy::class);
         $vacancySearchFilterParams = new VacancySearchFilterParams();
         $vacancySearchFilterParams->setVacancyIds($accessibleVacancyIds);
-        $vacancies = $this->getVacancyService()
+        $hiringManagerEmpNumbers = $this->getVacancyService()
             ->getVacancyDao()
-            ->getVacancyListGroupByHiringManager($vacancySearchFilterParams);
-        $hiringManagerEmpNumbers = array_map(function ($vacancy) {
-            if ($vacancy->getHiringManager() !== null) {
-                return $vacancy->getHiringManager()->getEmpNumber();
-            } else {
-                return null;
-            }
-        }, $vacancies);
+            ->getHiringManagerEmpNumberList($vacancySearchFilterParams);
         $employeeSearchFilterParams = new EmployeeSearchFilterParams();
         $this->setSortingAndPaginationParams($employeeSearchFilterParams);
         $employeeSearchFilterParams->setEmployeeNumbers($hiringManagerEmpNumbers);

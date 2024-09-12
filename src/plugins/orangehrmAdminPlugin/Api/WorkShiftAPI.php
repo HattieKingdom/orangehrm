@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -37,6 +36,7 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
+use OrangeHRM\Core\Api\V2\Validator\Rules\EntityUniquePropertyOption;
 use OrangeHRM\Entity\WorkShift;
 
 class WorkShiftAPI extends EndPoint implements CrudEndpoint
@@ -54,6 +54,8 @@ class WorkShiftAPI extends EndPoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/work-shifts",
      *     tags={"Admin/Work Shift"},
+     *     summary="List All Work Shifts",
+     *     operationId="list-all-workfshifts",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -109,6 +111,8 @@ class WorkShiftAPI extends EndPoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/work-shifts/{id}",
      *     tags={"Admin/Work Shift"},
+     *     summary="Get a Work Shift",
+     *     operationId="get-a-work-shift",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -155,6 +159,8 @@ class WorkShiftAPI extends EndPoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/work-shifts",
      *     tags={"Admin/Work Shift"},
+     *     summary="Create a Work Shift",
+     *     operationId="create-a-work-shift",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
@@ -230,16 +236,36 @@ class WorkShiftAPI extends EndPoint implements CrudEndpoint
     public function getValidationRuleForCreate(): ParamRuleCollection
     {
         return new ParamRuleCollection(
+            $this->getNameRule(),
+            new ParamRule(self::PARAMETER_HOURS_PER_DAY, new Rule(Rules::REQUIRED), new Rule(Rules::STRING_TYPE)),
+            new ParamRule(self::PARAMETER_START_TIME, new Rule(Rules::REQUIRED), new Rule(Rules::DATE_TIME)),
+            new ParamRule(
+                self::PARAMETER_END_TIME,
+                new Rule(Rules::REQUIRED),
+                new Rule(Rules::DATE_TIME),
+                new Rule(
+                    Rules::GREATER_THAN,
+                    [$this->getRequestParams()->getDateTime(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_START_TIME)]
+                )
+            ),
+            new ParamRule(self::PARAMETER_EMP_NUMBERS, new Rule(Rules::ARRAY_TYPE)),
+        );
+    }
+
+    /**
+     * @param EntityUniquePropertyOption|null $uniqueOption
+     * @return ParamRule
+     */
+    private function getNameRule(?EntityUniquePropertyOption $uniqueOption = null): ParamRule
+    {
+        return $this->getValidationDecorator()->requiredParamRule(
             new ParamRule(
                 self::PARAMETER_NAME,
                 new Rule(Rules::STRING_TYPE),
                 new Rule(Rules::REQUIRED),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH])
-            ),
-            new ParamRule(self::PARAMETER_HOURS_PER_DAY, new Rule(Rules::REQUIRED), new Rule(Rules::STRING_TYPE)),
-            new ParamRule(self::PARAMETER_START_TIME, new Rule(Rules::REQUIRED), new Rule(Rules::DATE_TIME)),
-            new ParamRule(self::PARAMETER_END_TIME, new Rule(Rules::REQUIRED), new Rule(Rules::DATE_TIME)),
-            new ParamRule(self::PARAMETER_EMP_NUMBERS, new Rule(Rules::ARRAY_TYPE)),
+                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
+                new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [WorkShift::class, 'name', $uniqueOption])
+            )
         );
     }
 
@@ -247,15 +273,21 @@ class WorkShiftAPI extends EndPoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/admin/work-shifts",
      *     tags={"Admin/Work Shift"},
+     *     summary="Delete Work Shifts",
+     *     operationId="delete-work-shifts",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getWorkShiftService()->getWorkShiftDao()->getExistingWorkShiftIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getWorkShiftService()->getWorkShiftDao()->deleteWorkShifts($ids);
 
         return new EndpointResourceResult(ArrayModel::class, $ids);
@@ -275,6 +307,8 @@ class WorkShiftAPI extends EndPoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/work-shifts/{id}",
      *     tags={"Admin/Work Shift"},
+     *     summary="Update a Work Shift",
+     *     operationId="update-a-work-shift",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -333,17 +367,23 @@ class WorkShiftAPI extends EndPoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         return new ParamRuleCollection(
             new ParamRule(CommonParams::PARAMETER_ID, new Rule(Rules::POSITIVE)),
-            new ParamRule(
-                self::PARAMETER_NAME,
-                new Rule(Rules::STRING_TYPE),
-                new Rule(Rules::REQUIRED),
-                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH])
-            ),
+            $this->getNameRule($uniqueOption),
             new ParamRule(self::PARAMETER_HOURS_PER_DAY, new Rule(Rules::REQUIRED), new Rule(Rules::STRING_TYPE)),
             new ParamRule(self::PARAMETER_START_TIME, new Rule(Rules::REQUIRED), new Rule(Rules::DATE_TIME)),
-            new ParamRule(self::PARAMETER_END_TIME, new Rule(Rules::REQUIRED), new Rule(Rules::DATE_TIME)),
+            new ParamRule(
+                self::PARAMETER_END_TIME,
+                new Rule(Rules::REQUIRED),
+                new Rule(Rules::DATE_TIME),
+                new Rule(
+                    Rules::GREATER_THAN,
+                    [$this->getRequestParams()->getDateTime(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_START_TIME)]
+                )
+            ),
             new ParamRule(self::PARAMETER_EMP_NUMBERS, new Rule(Rules::ARRAY_TYPE)),
         );
     }

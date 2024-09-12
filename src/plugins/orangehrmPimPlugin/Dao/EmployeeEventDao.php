@@ -4,24 +4,21 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Dao;
 
-use Exception;
 use OrangeHRM\Core\Dao\BaseDao;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\EmployeeEvent;
 use OrangeHRM\ORM\Paginator;
 use OrangeHRM\Pim\Dto\EmployeeEventSearchFilterParams;
@@ -33,16 +30,11 @@ class EmployeeEventDao extends BaseDao
      *
      * @param EmployeeEvent $employeeEvent
      * @return EmployeeEvent
-     * @throws DaoException
      */
     public function saveEmployeeEvent(EmployeeEvent $employeeEvent): EmployeeEvent
     {
-        try {
-            $this->persist($employeeEvent);
-            return $employeeEvent;
-        } catch (Exception $e) {
-            throw new DaoException($e->getMessage(), $e->getCode(), $e);
-        }
+        $this->persist($employeeEvent);
+        return $employeeEvent;
     }
 
     /**
@@ -50,16 +42,11 @@ class EmployeeEventDao extends BaseDao
      *
      * @param EmployeeEventSearchFilterParams $employeeEventSearchFilterParams
      * @return EmployeeEvent[]
-     * @throws DaoException
      */
     public function getEmployeeEvents(EmployeeEventSearchFilterParams $employeeEventSearchFilterParams): array
     {
-        try {
-            $paginator = $this->getEmployeeEventPaginator($employeeEventSearchFilterParams);
-            return $paginator->getQuery()->execute();
-        } catch (Exception $e) {
-            throw new DaoException($e->getMessage(), $e->getCode(), $e);
-        }
+        $paginator = $this->getEmployeeEventPaginator($employeeEventSearchFilterParams);
+        return $paginator->getQuery()->execute();
     }
 
     /**

@@ -4,24 +4,21 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Dao;
 
-use Exception;
 use OrangeHRM\Core\Dao\BaseDao;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Entity\EmpWorkExperience;
 use OrangeHRM\ORM\Paginator;
 use OrangeHRM\Pim\Dto\EmployeeWorkExperienceSearchFilterParams;
@@ -32,7 +29,6 @@ class EmployeeWorkExperienceDao extends BaseDao
     /**
      * @param EmpWorkExperience $employeeWorkExperience
      * @return EmpWorkExperience
-     * @throws DaoException
      */
     public function saveEmployeeWorkExperience(EmpWorkExperience $employeeWorkExperience): EmpWorkExperience
     {
@@ -63,45 +59,53 @@ class EmployeeWorkExperienceDao extends BaseDao
      * @param int $empNumber
      * @param int $seqNo
      * @return EmpWorkExperience|null
-     * @throws DaoException
      */
     public function getEmployeeWorkExperienceById(int $empNumber, int $seqNo): ?EmpWorkExperience
     {
-        try {
-            $employeeWorkExperience = $this->getRepository(EmpWorkExperience::class)->findOneBy(
-                [
-                    'employee' => $empNumber,
-                    'seqNo' => $seqNo,
-                ]
-            );
-            if ($employeeWorkExperience instanceof EmpWorkExperience) {
-                return $employeeWorkExperience;
-            }
-            return null;
-        } catch (Exception $e) {
-            throw new DaoException($e->getMessage(), $e->getCode(), $e);
+        $employeeWorkExperience = $this->getRepository(EmpWorkExperience::class)->findOneBy(
+            [
+                'employee' => $empNumber,
+                'seqNo' => $seqNo,
+            ]
+        );
+        if ($employeeWorkExperience instanceof EmpWorkExperience) {
+            return $employeeWorkExperience;
         }
+        return null;
+    }
+
+    /**
+     * @param int[] $ids
+     * @param int $empNumber
+     * @return int[]
+     */
+    public function getExistingEmpWorkExperienceIdsForEmpNumber(array $ids, int $empNumber): array
+    {
+        $qb = $this->createQueryBuilder(EmpWorkExperience::class, 'employeeWorkExperience');
+
+        $qb->select('employeeWorkExperience.seqNo')
+            ->andWhere($qb->expr()->in('employeeWorkExperience.seqNo', ':ids'))
+            ->andWhere($qb->expr()->eq('employeeWorkExperience.employee', ':empNumber'))
+            ->setParameter('ids', $ids)
+            ->setParameter('empNumber', $empNumber);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**
      * @param int $empNumber
      * @param array $toDeleteIds
      * @return int
-     * @throws DaoException
      */
     public function deleteEmployeeWorkExperiences(int $empNumber, array $toDeleteIds): int
     {
-        try {
-            $q = $this->createQueryBuilder(EmpWorkExperience::class, 'we');
-            $q->delete()
-                ->andWhere('we.employee = :empNumber')
-                ->setParameter('empNumber', $empNumber)
-                ->andWhere($q->expr()->in('we.seqNo', ':ids'))
-                ->setParameter('ids', $toDeleteIds);
-            return $q->getQuery()->execute();
-        } catch (Exception $e) {
-            throw new DaoException($e->getMessage());
-        }
+        $q = $this->createQueryBuilder(EmpWorkExperience::class, 'we');
+        $q->delete()
+            ->andWhere('we.employee = :empNumber')
+            ->setParameter('empNumber', $empNumber)
+            ->andWhere($q->expr()->in('we.seqNo', ':ids'))
+            ->setParameter('ids', $toDeleteIds);
+        return $q->getQuery()->execute();
     }
 
     /**
@@ -109,17 +113,12 @@ class EmployeeWorkExperienceDao extends BaseDao
      *
      * @param EmployeeWorkExperienceSearchFilterParams $employeeWorkExperienceSearchParams
      * @return EmpWorkExperience[]
-     * @throws DaoException
      */
     public function searchEmployeeWorkExperience(
         EmployeeWorkExperienceSearchFilterParams $employeeWorkExperienceSearchParams
     ): array {
-        try {
-            $paginator = $this->getSearchEmployeeWorkExperiencePaginator($employeeWorkExperienceSearchParams);
-            return $paginator->getQuery()->execute();
-        } catch (Exception $e) {
-            throw new DaoException($e->getMessage(), $e->getCode(), $e);
-        }
+        $paginator = $this->getSearchEmployeeWorkExperiencePaginator($employeeWorkExperienceSearchParams);
+        return $paginator->getQuery()->execute();
     }
 
     /**
@@ -142,16 +141,11 @@ class EmployeeWorkExperienceDao extends BaseDao
      *
      * @param EmployeeWorkExperienceSearchFilterParams $employeeWorkExperienceSearchParams
      * @return int
-     * @throws DaoException
      */
     public function getSearchEmployeeWorkExperiencesCount(
         EmployeeWorkExperienceSearchFilterParams $employeeWorkExperienceSearchParams
     ): int {
-        try {
-            $paginator = $this->getSearchEmployeeWorkExperiencePaginator($employeeWorkExperienceSearchParams);
-            return $paginator->count();
-        } catch (Exception $e) {
-            throw new DaoException($e->getMessage(), $e->getCode(), $e);
-        }
+        $paginator = $this->getSearchEmployeeWorkExperiencePaginator($employeeWorkExperienceSearchParams);
+        return $paginator->count();
     }
 }

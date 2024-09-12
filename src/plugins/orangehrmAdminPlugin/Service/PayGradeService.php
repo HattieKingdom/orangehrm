@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Service;
@@ -25,7 +24,6 @@ use OrangeHRM\Admin\Dto\PayGradeSearchFilterParams;
 use OrangeHRM\Admin\Service\Model\CurrencyModel;
 use OrangeHRM\Admin\Service\Model\PayGradeModel;
 use OrangeHRM\Admin\Service\Model\PayPeriodModel;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Core\Traits\Service\NormalizerServiceTrait;
 use OrangeHRM\Entity\CurrencyType;
 use OrangeHRM\Entity\PayGrade;
@@ -62,7 +60,6 @@ class PayGradeService
     /**
      * @param int $payGradeId
      * @return PayGrade|null
-     * @throws DaoException
      */
     public function getPayGradeById(int $payGradeId): ?PayGrade
     {
@@ -72,7 +69,6 @@ class PayGradeService
     /**
      * @param PayGradeSearchFilterParams|null $payGradeSearchFilterParams
      * @return PayGrade[]
-     * @throws DaoException
      */
     public function getPayGradeList(PayGradeSearchFilterParams $payGradeSearchFilterParams = null): array
     {
@@ -85,7 +81,6 @@ class PayGradeService
     /**
      * @param int $payGradeId
      * @return PayGradeCurrency[]
-     * @throws DaoException
      */
     public function getCurrencyListByPayGradeId(int $payGradeId): array
     {
@@ -95,7 +90,6 @@ class PayGradeService
     /**
      * @param PayGradeCurrencySearchFilterParams $payGradeCurrencySearchFilterParams
      * @return PayGradeCurrency[]
-     * @throws DaoException
      */
     public function getPayGradeCurrencyList(PayGradeCurrencySearchFilterParams $payGradeCurrencySearchFilterParams): array
     {
@@ -105,7 +99,6 @@ class PayGradeService
     /**
      * @param PayGradeCurrencySearchFilterParams $payGradeCurrencySearchFilterParams
      * @return int
-     * @throws DaoException
      */
     public function getPayGradeCurrencyListCount(PayGradeCurrencySearchFilterParams $payGradeCurrencySearchFilterParams): int
     {
@@ -116,7 +109,6 @@ class PayGradeService
      * @param string $currencyId
      * @param int $payGradeId
      * @return PayGradeCurrency|null
-     * @throws DaoException
      */
     public function getCurrencyByCurrencyIdAndPayGradeId(string $currencyId, int $payGradeId): ?PayGradeCurrency
     {
@@ -128,7 +120,6 @@ class PayGradeService
      * @param string $currencyId
      * @param int $payGradeId
      * @return bool
-     * @throws DaoException
      */
     public function isValidSalaryAmountForPayGradeCurrency(
         string $salaryAmount,
@@ -148,7 +139,6 @@ class PayGradeService
 
     /**
      * @return array
-     * @throws DaoException
      */
     public function getPayPeriodArray(): array
     {
@@ -158,7 +148,6 @@ class PayGradeService
 
     /**
      * @return array
-     * @throws DaoException
      */
     public function getPayGradeArray(): array
     {
@@ -168,7 +157,6 @@ class PayGradeService
 
     /**
      * @return array
-     * @throws DaoException
      */
     public function getCurrencyArray(): array
     {
@@ -179,7 +167,6 @@ class PayGradeService
     /**
      * @param string $id
      * @return CurrencyType|null
-     * @throws DaoException
      */
     public function getCurrencyById(string $id): ?CurrencyType
     {
@@ -189,7 +176,6 @@ class PayGradeService
     /**
      * @param PayGrade $payGrade
      * @return PayGrade
-     * @throws DaoException
      */
     public function savePayGrade(PayGrade $payGrade): PayGrade
     {
@@ -199,7 +185,6 @@ class PayGradeService
     /**
      * @param PayGradeCurrency $payGradeCurrency
      * @return PayGradeCurrency
-     * @throws DaoException
      */
     public function savePayGradeCurrency(PayGradeCurrency $payGradeCurrency): PayGradeCurrency
     {
@@ -209,7 +194,6 @@ class PayGradeService
     /**
      * @param array $toBeDeletedIds
      * @return int
-     * @throws DaoException
      */
     public function deletePayGrades(array $toBeDeletedIds): int
     {
@@ -219,7 +203,6 @@ class PayGradeService
     /**
      * @param PayGradeCurrencySearchFilterParams $payGradeCurrencySearchFilterParams
      * @return int|mixed|string
-     * @throws DaoException
      */
     public function getAllowedPayCurrencies(PayGradeCurrencySearchFilterParams $payGradeCurrencySearchFilterParams)
     {
@@ -235,7 +218,6 @@ class PayGradeService
      * @param int $payGradeId
      * @param array $toBeDeletedIds
      * @return int|mixed|string
-     * @throws DaoException
      */
     public function deletePayGradeCurrency(int $payGradeId, array $toBeDeletedIds): int
     {

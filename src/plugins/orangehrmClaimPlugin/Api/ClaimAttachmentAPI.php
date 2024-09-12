@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Claim\Api;
@@ -68,6 +67,8 @@ class ClaimAttachmentAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/claim/requests/{requestId}/attachments",
      *     tags={"Claim/Attachments"},
+     *     summary="List Attachements on a Claim",
+     *     operationId="list-attachments-on-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
@@ -142,6 +143,8 @@ class ClaimAttachmentAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/claim/requests/{requestId}/attachments",
      *     tags={"Claim/Attachments"},
+     *     summary="Add Attachments to a Claim",
+     *     operationId="add-attachments-to-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
@@ -273,6 +276,8 @@ class ClaimAttachmentAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/claim/requests/{requestId}/attachments",
      *     tags={"Claim/Attachments"},
+     *     summary="Remove Attachments from a Claim",
+     *     operationId="remove-attachments-from-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
@@ -295,7 +300,9 @@ class ClaimAttachmentAPI extends Endpoint implements CrudEndpoint
      *             ),
      *             @OA\Property(property="meta", type="object")
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response="403", ref="#/components/responses/ForbiddenResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      * @inheritDoc
      */
@@ -305,11 +312,15 @@ class ClaimAttachmentAPI extends Endpoint implements CrudEndpoint
             RequestParams::PARAM_TYPE_ATTRIBUTE,
             self::PARAMETER_REQUEST_ID
         );
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
         $claimRequest = $this->getClaimRequest($requestId);
 
         $this->isActionAllowed(WorkflowStateMachine::CLAIM_ACTION_SUBMIT, $claimRequest);
 
+        $ids = $this->getClaimService()->getClaimDao()->getExistingClaimAttachmentIdsForRequestId(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS),
+            $requestId
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getClaimService()
             ->getClaimDao()
             ->deleteClaimAttachments($requestId, $ids);
@@ -338,6 +349,8 @@ class ClaimAttachmentAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/claim/requests/{requestId}/attachments/{id}",
      *     tags={"Claim/Attachments"},
+     *     summary="View an Attachment on a Claim",
+     *     operationId="view-an-attachment-on-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
@@ -398,6 +411,8 @@ class ClaimAttachmentAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/claim/requests/{requestId}/attachments/{id}",
      *     tags={"Claim/Attachments"},
+     *     summary="Update an Attachment on a Claim",
+     *     operationId="update-an-attachment-on-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")

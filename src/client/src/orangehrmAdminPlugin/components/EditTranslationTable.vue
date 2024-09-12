@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -64,11 +63,10 @@
           >
             {{ $t('admin.translated_text') }}
           </oxd-text>
-          <oxd-input-field
-            type="input"
+          <lang-string-target-input
+            :lang-string-id="langstring.langStringId"
             :placeholder="langstring.target"
             :model-value="langstring.target"
-            :rules="rules.langString"
             @update:model-value="onUpdateTranslation($event, index)"
           />
           <oxd-divider class="orangehrm-translation-grid-langstring-header" />
@@ -79,9 +77,12 @@
   </div>
 </template>
 <script>
-import {validLangString} from '@/core/util/validation/rules';
+import LangStringTargetInput from '@/orangehrmAdminPlugin/components/LangStringTargetInput.vue';
 
 export default {
+  components: {
+    LangStringTargetInput,
+  },
   props: {
     langstrings: {
       type: Array,
@@ -96,8 +97,14 @@ export default {
       context.emit(
         'update:langstrings',
         props.langstrings.map((item, _index) => {
+          let oldTarget = item.modified ? item.oldTarget : item.target ?? '';
           if (_index === index) {
-            return {...item, target: value, modified: true};
+            return {
+              ...item,
+              target: value,
+              oldTarget: oldTarget,
+              modified: true,
+            };
           }
           return item;
         }),
@@ -106,9 +113,6 @@ export default {
 
     return {
       onUpdateTranslation,
-      rules: {
-        langString: [validLangString],
-      },
     };
   },
 };

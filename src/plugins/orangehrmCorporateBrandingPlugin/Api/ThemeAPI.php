@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\CorporateBranding\Api;
@@ -62,6 +61,23 @@ class ThemeAPI extends Endpoint implements ResourceEndpoint
     public const PARAM_RULE_FILE_NAME_MAX_LENGTH = 100;
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/admin/theme",
+     *     tags={"Admin/Theme"},
+     *     summary="Get Theme Details",
+     *     operationId="get-theme-details",
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/CorporateBranding-ThemeModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
      * @inheritDoc
      */
     public function getOne(): EndpointResult
@@ -90,6 +106,70 @@ class ThemeAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/admin/theme",
+     *     tags={"Admin/Theme"},
+     *     summary="Edit Theme",
+     *     operationId="edit-theme",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="variables", type="object",
+     *                 @OA\Property(property="primaryColor", type="string", example="#FF7B1D"),
+     *                 @OA\Property(property="primaryFontColor", type="string", example="#FFFFFF"),
+     *                 @OA\Property(property="secondaryColor", type="string", example="#76BC21"),
+     *                 @OA\Property(property="secondaryFontColor", type="string", example="#FFFFFF"),
+     *                 @OA\Property(property="primaryGradientStartColor", type="string", example="#FF920B"),
+     *                 @OA\Property(property="primaryGradientEndColor", type="string", example="#F35C17"),
+     *                 required={"primaryColor", "primaryFontColor", "secondaryColor", "secondaryFontColor", "primaryGradientStartColor", "primaryGradientEndColor"}
+     *             ),
+     *             @OA\Property(property="showSocialMediaImages", type="boolean", example=true),
+     *             @OA\Property(property="clientLogo", ref="#/components/schemas/Base64Attachment"),
+     *             @OA\Property(property="clientBanner", ref="#/components/schemas/Base64Attachment"),
+     *             @OA\Property(property="loginBanner", ref="#/components/schemas/Base64Attachment"),
+     *             @OA\Property(
+     *                 property="currentClientLogo",
+     *                 type="string",
+     *                 nullable=true,
+     *                 enum={
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::KEEP_CURRENT,
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::DELETE_CURRENT,
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::REPLACE_CURRENT,
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="currentClientBanner",
+     *                 type="string",
+     *                 nullable=true,
+     *                 enum={
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::KEEP_CURRENT,
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::DELETE_CURRENT,
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::REPLACE_CURRENT,
+     *                 }
+     *             ),
+     *             @OA\Property(
+     *                 property="currentLoginBanner",
+     *                 type="string",
+     *                 nullable=true,
+     *                 enum={
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::KEEP_CURRENT,
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::DELETE_CURRENT,
+     *                     OrangeHRM\CorporateBranding\Api\ThemeAPI::REPLACE_CURRENT,
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/CorporateBranding-ThemeModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
      * @inheritDoc
      */
     public function update(): EndpointResult
@@ -281,6 +361,27 @@ class ThemeAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/admin/theme",
+     *     tags={"Admin/Theme"},
+     *     summary="Reset Theme",
+     *     operationId="reset-theme",
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 @OA\Property(property="success", type="boolean"),
+     *             )
+     *         )
+     *     ),
+     * )
      * @inheritDoc
      */
     public function delete(): EndpointResult

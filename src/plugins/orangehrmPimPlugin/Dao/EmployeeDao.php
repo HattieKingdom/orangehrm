@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Dao;
@@ -39,7 +38,7 @@ class EmployeeDao extends BaseDao
     public function getEmployeeList(EmployeeSearchFilterParams $employeeSearchParamHolder): array
     {
         $qb = $this->getEmployeeListQueryBuilderWrapper($employeeSearchParamHolder)->getQueryBuilder();
-        return $qb->getQuery()->execute();
+        return array_column($qb->getQuery()->execute(), 0);
     }
 
     /**
@@ -74,6 +73,7 @@ class EmployeeDao extends BaseDao
         EmployeeSearchFilterParams $employeeSearchParamHolder
     ): QueryBuilderWrapper {
         $q = $this->createQueryBuilder(Employee::class, 'employee');
+        $q->addSelect('employee.empNumber');
         $q->distinct();
         $q->leftJoin('employee.jobTitle', 'jobTitle');
         $q->leftJoin('employee.subDivision', 'subunit');
@@ -87,6 +87,9 @@ class EmployeeDao extends BaseDao
         }
 
         $this->setSortingAndPaginationParams($q, $employeeSearchParamHolder);
+        if ($employeeSearchParamHolder->getSortField() !== null && $employeeSearchParamHolder->getSortField() !== "") {
+            $q->addSelect($employeeSearchParamHolder->getSortField());
+        }
 
         if (is_null($employeeSearchParamHolder->getIncludeEmployees()) ||
             $employeeSearchParamHolder->getIncludeEmployees() ===
@@ -219,6 +222,22 @@ class EmployeeDao extends BaseDao
     public function getEmployeeByEmpNumber(int $empNumber): ?Employee
     {
         return $this->getRepository(Employee::class)->find($empNumber);
+    }
+
+    /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingEmpNumbers(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(Employee::class, 'employee');
+
+        $qb->select('employee.empNumber')
+            ->andWhere($qb->expr()->in('employee.empNumber', ':ids'))
+            ->andWhere($qb->expr()->isNull('employee.purgedAt'))
+            ->setParameter(':ids', $ids);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**
@@ -470,7 +489,7 @@ class EmployeeDao extends BaseDao
         $q = $this->getEmployeeListQueryBuilderWrapper($employeeSearchParamHolder)->getQueryBuilder();
         $q->leftJoin('employee.employeeWorkShift', 'ew');
         $q->andWhere($q->expr()->isNull('ew.employee'));
-        return $q->getQuery()->execute();
+        return array_column($q->getQuery()->execute(), 0);
     }
 
     /**

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -59,6 +58,30 @@ class OptionalFieldAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/optional-field",
+     *     tags={"PIM/Optional Field"},
+     *     summary="Get Optional Field Configuration",
+     *     operationId="get-optional-field-configuration",
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="pimShowDeprecatedFields", type="boolean"),
+     *                     @OA\Property(property="showSSN", type="boolean"),
+     *                     @OA\Property(property="showSIN", type="boolean"),
+     *                     @OA\Property(property="showTaxExemptions", type="boolean")
+     *                 ),
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResourceResult
@@ -80,6 +103,39 @@ class OptionalFieldAPI extends Endpoint implements ResourceEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/optional-field",
+     *     tags={"PIM/Optional Field"},
+     *     summary="Update Optional Field Configuration",
+     *     operationId="update-optional-field-configuration",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="pimShowDeprecatedFields", type="boolean"),
+     *             @OA\Property(property="showSSN", type="boolean"),
+     *             @OA\Property(property="showSIN", type="boolean"),
+     *             @OA\Property(property="showTaxExemptions", type="boolean"),
+     *             required={"pimShowDeprecatedFields", "showSSN", "showSIN", "showTaxExemptions"}
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="pimShowDeprecatedFields", type="boolean"),
+     *                     @OA\Property(property="showSSN", type="boolean"),
+     *                     @OA\Property(property="showSIN", type="boolean"),
+     *                     @OA\Property(property="showTaxExemptions", type="boolean")
+     *                 ),
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      * @throws Exception
      */

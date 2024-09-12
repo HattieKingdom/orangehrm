@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Core\Api\V2\Validator;
@@ -51,6 +50,7 @@ final class Rules
     public const PASSWORD = OHRMRules\Password::class;
     public const INT_ARRAY = OHRMRules\IntArray::class;
     public const STR_LENGTH = OHRMRules\StrLength::class;
+    public const STRING_TYPE = OHRMRules\NotBlankStringType::class;
 
     public const ALNUM = RespectRules\Alnum::class;
     public const ALPHA = RespectRules\Alpha::class;
@@ -172,7 +172,6 @@ final class Rules
     public const SORTED = RespectRules\Sorted::class;
     public const SPACE = RespectRules\Space::class;
     public const STARTS_WITH = RespectRules\StartsWith::class;
-    public const STRING_TYPE = RespectRules\StringType::class;
     public const STRING_VAL = RespectRules\StringVal::class;
     public const SUBDIVISION_CODE = RespectRules\SubdivisionCode::class;
     public const SUBSET = RespectRules\Subset::class;

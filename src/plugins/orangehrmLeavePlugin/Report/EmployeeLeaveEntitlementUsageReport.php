@@ -4,23 +4,23 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Report;
 
 use OrangeHRM\Core\Api\CommonParams;
 use OrangeHRM\Core\Api\Rest\ReportAPI;
+use OrangeHRM\Core\Api\V2\Exception\BadRequestException;
 use OrangeHRM\Core\Api\V2\Exception\ForbiddenException;
 use OrangeHRM\Core\Api\V2\RequestParams;
 use OrangeHRM\Core\Api\V2\Validator\ParamRule;
@@ -39,6 +39,7 @@ use OrangeHRM\Core\Traits\UserRoleManagerTrait;
 use OrangeHRM\I18N\Traits\Service\I18NHelperTrait;
 use OrangeHRM\Leave\Api\LeaveCommonParams;
 use OrangeHRM\Leave\Dto\EmployeeLeaveEntitlementUsageReportSearchFilterParams;
+use OrangeHRM\Leave\Traits\Service\LeaveConfigServiceTrait;
 use OrangeHRM\Leave\Traits\Service\LeavePeriodServiceTrait;
 
 class EmployeeLeaveEntitlementUsageReport implements EndpointAwareReport
@@ -48,6 +49,7 @@ class EmployeeLeaveEntitlementUsageReport implements EndpointAwareReport
     use TextHelperTrait;
     use UserRoleManagerTrait;
     use I18NHelperTrait;
+    use LeaveConfigServiceTrait;
 
     public const PARAMETER_LEAVE_TYPE_NAME = 'leaveTypeName';
     public const PARAMETER_ENTITLEMENT_DAYS = 'entitlementDays';
@@ -160,7 +162,7 @@ class EmployeeLeaveEntitlementUsageReport implements EndpointAwareReport
     public function getValidationRule(EndpointProxy $endpoint): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            $endpoint->getValidationDecorator()->notRequiredParamRule(
+            $endpoint->getValidationDecorator()->requiredParamRule(
                 new ParamRule(CommonParams::PARAMETER_EMP_NUMBER, new Rule(Rules::IN_ACCESSIBLE_EMP_NUMBERS))
             ),
             $endpoint->getValidationDecorator()->notRequiredParamRule(
@@ -194,6 +196,9 @@ class EmployeeLeaveEntitlementUsageReport implements EndpointAwareReport
         }
         if (!$this->getUserRoleManagerHelper()->getEntityIndependentDataGroupPermissions($dataGroup)->canRead()) {
             throw new ForbiddenException();
+        }
+        if (!$this->getLeaveConfigService()->isLeavePeriodDefined()) {
+            throw new BadRequestException("Leave period is not defined");
         }
     }
 }

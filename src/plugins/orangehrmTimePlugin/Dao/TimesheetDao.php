@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Time\Dao;
@@ -437,9 +436,21 @@ class TimesheetDao extends BaseDao
         EmployeeReportsSearchFilterParams $filterParams
     ): Paginator {
         $qb = $this->getTimesheetItemsForEmployeeReportQueryBuilderWrapper($filterParams)->getQueryBuilder();
-        $qb->addSelect('COALESCE(SUM(timesheetItem.duration),0) AS totalDurationByGroup');
-        $qb->addGroupBy('timesheetItem.project');
-        $qb->addGroupBy('timesheetItem.projectActivity');
+        $qb->select(
+            'project.name AS projectName',
+            'projectActivity.name AS activityName',
+            'customer.name AS customerName',
+            'COALESCE(SUM(timesheetItem.duration),0) AS totalDurationByGroup'
+        );
+
+        $qb->addGroupBy('projectName');
+        $qb->addGroupBy('activityName');
+        $qb->addGroupBy('customerName');
+
+        $qb->addOrderBy('projectName', ListSorter::ASCENDING);
+        $qb->addOrderBy('activityName', ListSorter::ASCENDING);
+        $qb->addOrderBy('customerName', ListSorter::ASCENDING);
+
         return $this->getPaginator($qb);
     }
 
@@ -488,14 +499,11 @@ class TimesheetDao extends BaseDao
         }
 
         if ($filterParams->getIncludeTimesheets(
-            ) === EmployeeReportsSearchFilterParams::INCLUDE_TIMESHEETS_APPROVED_ONLY) {
+        ) === EmployeeReportsSearchFilterParams::INCLUDE_TIMESHEETS_APPROVED_ONLY) {
             $q->andWhere('timesheet.state = :state');
             $q->setParameter('state', EmployeeReportsSearchFilterParams::TIMESHEET_APPROVED_STATE);
         }
         //else: neither fromDate nor toDate is available
-
-        $q->addOrderBy('project.name', ListSorter::ASCENDING);
-        $q->addOrderBy('projectActivity.name', ListSorter::ASCENDING);
 
         return $this->getQueryBuilderWrapper($q);
     }

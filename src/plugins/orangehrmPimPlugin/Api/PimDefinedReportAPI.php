@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -71,6 +70,49 @@ class PimDefinedReportAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/reports/defined",
+     *     tags={"PIM/Defined Report"},
+     *     summary="List All PIM Reports",
+     *     operationId="list-all-pim-reports",
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="reportId",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=PimDefinedReportSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-PimDefinedReportModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer"),
+     *                 @OA\Property(property="empNumber", type="integer")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function getAll(): EndpointResult
@@ -120,6 +162,50 @@ class PimDefinedReportAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/pim/reports/defined",
+     *     tags={"PIM/Defined Report"},
+     *     summary="Create a PIM Report",
+     *     operationId="create-a-pim-report",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"name", "include", "criteria", "fieldGroup"},
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\PimDefinedReportAPI::PARAM_RULE_NAME_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="include", type="string", enum={"onlyPast", "currentAndPast", "onlyCurrent"}),
+     *             @OA\Property(property="criteria", type="object",
+     *                 @OA\Property(type="object",
+     *                     @OA\Property(property="x", type="string"),
+     *                     @OA\Property(property="y", type="string"),
+     *                     @OA\Property(property="operator", type="string")
+     *                 ),
+     *             ),
+     *             @OA\Property(property="fieldGroup", type="object",
+     *                 @OA\Property(type="object",
+     *                     required={"fields", "includeHeader"},
+     *                     @OA\Property(property="fields", type="array", @OA\Items(type="integer")),
+     *                     @OA\Property(property="includeHeader", type="boolean")
+     *                 ),
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-PimDefinedReportModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
+     *
      * @inheritDoc
      * @throws TransactionException
      */
@@ -163,11 +249,24 @@ class PimDefinedReportAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/pim/reports/defined",
+     *     tags={"PIM/Defined Report"},
+     *     summary="Delete PIM Reports",
+     *     operationId="delete-pim-reports",
+     *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getReportGeneratorService()->getReportGeneratorDao()->getExistingReportIdsForPim(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getReportGeneratorService()->getReportGeneratorDao()->deletePimDefinedReport($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }
@@ -214,6 +313,53 @@ class PimDefinedReportAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/reports/defined/{id}",
+     *     tags={"PIM/Defined Report"},
+     *     summary="Update a PIM Report",
+     *     operationId="update-a-pim-report",
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 maxLength=OrangeHRM\Pim\Api\PimDefinedReportAPI::PARAM_RULE_NAME_MAX_LENGTH
+     *             ),
+     *             @OA\Property(property="include", type="string", enum={"onlyPast", "currentAndPast", "onlyCurrent"}),
+     *             @OA\Property(property="criteria", type="object",
+     *                 @OA\Property(type="object",
+     *                     @OA\Property(property="x", type="string"),
+     *                     @OA\Property(property="y", type="string"),
+     *                     @OA\Property(property="operator", type="string")
+     *                 ),
+     *             ),
+     *             @OA\Property(property="fieldGroup", type="object",
+     *                 @OA\Property(type="object",
+     *                     required={"fields", "includeHeader"},
+     *                     @OA\Property(property="fields", type="array", @OA\Items(type="integer")),
+     *                     @OA\Property(property="includeHeader", type="boolean")
+     *                 ),
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-PimDefinedReportModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      * @throws TransactionException
      */

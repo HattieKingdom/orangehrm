@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Tests\Pim\Api;
@@ -72,7 +71,7 @@ class EmployeeCountAPITest extends EndpointTestCase
         $this->assertTrue($this->validate([EmployeeAPI::FILTER_EMPLOYEE_ID => '0001'], $rules));
         $this->assertTrue($this->validate([EmployeeAPI::FILTER_EMPLOYEE_ID => str_repeat('00001', 2)], $rules));
         $this->assertInvalidParamException(
-        // maximum 50 allowed in the rule
+            // maximum 50 allowed in the rule
             fn () => $this->validate([EmployeeAPI::FILTER_EMPLOYEE_ID => str_repeat('00001', 2) . '1'], $rules),
             [EmployeeAPI::FILTER_EMPLOYEE_ID]
         );
@@ -91,7 +90,7 @@ class EmployeeCountAPITest extends EndpointTestCase
         $this->assertTrue($this->validate([EmployeeAPI::FILTER_NAME => 'Kayla'], $rules));
         $this->assertTrue($this->validate([EmployeeAPI::FILTER_NAME => str_repeat('Kayla', 20)], $rules));
         $this->assertInvalidParamException(
-        // maximum 100 allowed in the rule
+            // maximum 100 allowed in the rule
             fn () => $this->validate([EmployeeAPI::FILTER_NAME => str_repeat('ස්ටීව්', 17)], $rules),
             [EmployeeAPI::FILTER_NAME]
         );
@@ -99,7 +98,7 @@ class EmployeeCountAPITest extends EndpointTestCase
         $this->assertTrue($this->validate([EmployeeAPI::FILTER_NAME_OR_ID => '0002'], $rules));
         $this->assertTrue($this->validate([EmployeeAPI::FILTER_NAME_OR_ID => str_repeat('Kayla', 20)], $rules));
         $this->assertInvalidParamException(
-        // maximum 100 allowed in the rule
+            // maximum 100 allowed in the rule
             fn () => $this->validate([EmployeeAPI::FILTER_NAME_OR_ID => str_repeat('Kyla ', 20) . 'a'], $rules),
             [EmployeeAPI::FILTER_NAME_OR_ID]
         );

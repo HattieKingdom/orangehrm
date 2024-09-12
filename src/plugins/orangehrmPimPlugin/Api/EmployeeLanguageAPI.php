@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Api;
@@ -64,6 +63,44 @@ class EmployeeLanguageAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/languages/{languageId}/fluencies/{fluencyId}",
+     *     tags={"PIM/Employee Language"},
+     *     summary="Get an Employee's Language and Fluency",
+     *     operationId="get-an-employees-language-and-fluency",
+     *     description="This endpoint allows you to get a particular employee's fluency for a particular language.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="languageId",
+     *         description="Specify the numerical ID of the desired language",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="fluencyId",
+     *         description="Specify the numerical ID of the desired fluency",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeLanguageModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      */
     public function getOne(): EndpointResult
@@ -115,6 +152,45 @@ class EmployeeLanguageAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v2/pim/employees/{empNumber}/languages",
+     *     tags={"PIM/Employee Language"},
+     *     summary="List an Employee's Languages",
+     *     operationId="list-an-employees-languages",
+     *     description="This endpoint allows you to list the languages and fluency for a particular employee.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sortField",
+     *         description="Sort the languages by name",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum=EmployeeLanguagesSearchFilterParams::ALLOWED_SORT_FIELDS)
+     *     ),
+     *     @OA\Parameter(ref="#/components/parameters/sortOrder"),
+     *     @OA\Parameter(ref="#/components/parameters/limit"),
+     *     @OA\Parameter(ref="#/components/parameters/offset"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Pim-EmployeeLanguageModel")
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="total", description="The total number of language records", type="integer"),
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer")
+     *             )
+     *         )
+     *     ),
+     * )
+     *
      * @inheritDoc
      */
     public function getAll(): EndpointResult
@@ -154,6 +230,52 @@ class EmployeeLanguageAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v2/pim/employees/{empNumber}/languages",
+     *     tags={"PIM/Employee Language"},
+     *     summary="Add a Language to an Employee",
+     *     operationId="add-a-language-to-an-employee",
+     *     description="This endpoint allows you to add a language and fluency to an employee.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="languageId", description="Specify the numerical ID of the language", type="integer"),
+     *             @OA\Property(property="fluencyId", description="Specify the numerical ID of the fluency", type="integer", enum=OrangeHRM\Entity\EmployeeLanguage::FLUENCIES),
+     *             @OA\Property(property="competencyId", description="Specify the numerical ID of the compenetency", type="integer", enum=OrangeHRM\Entity\EmployeeLanguage::COMPETENCIES),
+     *             @OA\Property(property="comment", description="Specify the comment", type="string"),
+     *             required={"languageId", "fluencyId", "competencyId", "comment"}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeLanguageModel"
+     *             ),
+     *             @OA\Property(property="empNumber", description="The employee number given in the request", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response="400",
+     *         description="Bad Request - Repeated languageId & empNumber combination",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="status", type="string", default="400"),
+     *                 @OA\Property(property="messsage", type="string", default="Given `fluencyId` already there for given `languageId` & `empNumber` combination")
+     *             )
+     *         )
+     *     )
+     * )
+     *
      * @inheritDoc
      */
     public function create(): EndpointResult
@@ -226,6 +348,53 @@ class EmployeeLanguageAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v2/pim/employees/{empNumber}/languages/{languageId}/fluencies/{fluencyId}",
+     *     tags={"PIM/Employee Language"},
+     *     summary="Update an Employee's Language and Fluency",
+     *     operationId="update-an-employees-langauge-and-fluency",
+     *     description="This endpoint allows you to update an employee's language and fluency.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="Specify the employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="languageId",
+     *         description="Specify the numerical ID of the desired language",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\PathParameter(
+     *         name="fluencyId",
+     *         description="Specify the numerical ID of the desired fluency",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="languageId", description="Specify the numerical ID of the language", type="integer"),
+     *             @OA\Property(property="fluencyId", description="Specify the numerical ID of the fluency", type="integer", enum=OrangeHRM\Entity\EmployeeLanguage::FLUENCIES),
+     *             @OA\Property(property="competencyId", description="Specify the numerical ID of the competency", type="integer", enum=OrangeHRM\Entity\EmployeeLanguage::COMPETENCIES),
+     *             @OA\Property(property="comment", description="Specify the comment regarding the language and fluency", type="string"),
+     *             required={"competencyId"}
+     *         )
+     *     ),
+     *     @OA\Response(response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Pim-EmployeeLanguageModel"
+     *             ),
+     *             @OA\Property(property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="empNumber", description="The employee number given in the request", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     * )
+     *
      * @inheritDoc
      * @throws Exception
      */
@@ -262,6 +431,31 @@ class EmployeeLanguageAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v2/pim/employees/{empNumber}/languages",
+     *     tags={"PIM/Employee Language"},
+     *     summary="Delete an Employee's Languages",
+     *     operationId="delete-an-employees-languages",
+     *     description="This endpoint allows you to delete an employee's language and fluency.",
+     *     @OA\PathParameter(
+     *         name="empNumber",
+     *         description="The employee number of the desired employee",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="languageId", type="integer", description="The numerical ID of the language to be deleted"),
+     *                     @OA\Property(property="fluencyId", type="integer",  description="The numerical ID of the fluency to be deleted")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     * )
+     *
      * @inheritDoc
      * @throws Exception
      */
@@ -271,10 +465,11 @@ class EmployeeLanguageAPI extends Endpoint implements CrudEndpoint
             RequestParams::PARAM_TYPE_ATTRIBUTE,
             CommonParams::PARAMETER_EMP_NUMBER
         );
-        $entriesToDelete = $this->getRequestParams()->getArray(
-            RequestParams::PARAM_TYPE_BODY,
-            CommonParams::PARAMETER_IDS
+        $entriesToDelete = $this->getEmployeeLanguageService()->getEmployeeLanguageDao()->getExistingEmployeeLanguageRecordsForEmpNumber(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS),
+            $empNumber
         );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($entriesToDelete);
         $this->getEmployeeLanguageService()->getEmployeeLanguageDao()->deleteEmployeeLanguages(
             $empNumber,
             $entriesToDelete

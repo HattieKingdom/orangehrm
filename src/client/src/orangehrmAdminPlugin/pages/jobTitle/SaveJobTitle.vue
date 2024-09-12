@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -56,7 +55,7 @@
             :rules="rules.specification"
           />
           <oxd-text class="orangehrm-input-hint" tag="p">
-            {{ $t('general.accepts_up_to_1mb') }}
+            {{ $t('general.accepts_up_to_n_mb', {count: formattedFileSize}) }}
           </oxd-text>
         </oxd-form-row>
 
@@ -96,6 +95,7 @@ import {
   validFileTypes,
   maxFileSize,
 } from '@ohrm/core/util/validation/rules';
+import useServerValidation from '@/core/util/composable/useServerValidation';
 
 const initialJobTitle = {
   title: '',
@@ -121,8 +121,19 @@ export default {
       window.appGlobal.baseUrl,
       '/api/v2/admin/job-titles',
     );
+    const {createUniqueValidator} = useServerValidation(http);
+    const jobTitleUniqueValidation = createUniqueValidator(
+      'JobTitle',
+      'jobTitleName',
+      {
+        matchByField: 'isDeleted',
+        matchByValue: 'false',
+      },
+    );
+
     return {
       http,
+      jobTitleUniqueValidation,
     };
   },
 
@@ -131,7 +142,11 @@ export default {
       isLoading: false,
       jobTitle: {...initialJobTitle},
       rules: {
-        title: [required, shouldNotExceedCharLength(100)],
+        title: [
+          required,
+          this.jobTitleUniqueValidation,
+          shouldNotExceedCharLength(100),
+        ],
         description: [shouldNotExceedCharLength(400)],
         specification: [
           validFileTypes(this.allowedFileTypes),
@@ -142,23 +157,10 @@ export default {
     };
   },
 
-  created() {
-    this.isLoading = true;
-    this.http
-      .getAll({limit: 0})
-      .then((response) => {
-        const {data} = response.data;
-        this.rules.title.push((v) => {
-          const index = data.findIndex(
-            (item) =>
-              String(item.title).toLowerCase() == String(v).toLowerCase(),
-          );
-          return index === -1 || this.$t('general.already_exists');
-        });
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
+  computed: {
+    formattedFileSize() {
+      return Math.round((this.maxFileSize / (1024 * 1024)) * 100) / 100;
+    },
   },
 
   methods: {

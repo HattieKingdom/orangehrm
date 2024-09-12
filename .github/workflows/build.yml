@@ -8,7 +8,24 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Get product version and build version
+        id: get_version
+        run: |
+          echo "product_version=$(grep PRODUCT_VERSION src/lib/config/Config.php | sed "s/    public const PRODUCT_VERSION = '//" | sed 's/"//g' | sed "s/';//")" >> $GITHUB_OUTPUT
+          echo "build_version=$(grep 'name="version" value=' build/build.xml | sed 's/  <property name="version" value="//' | sed 's;"/>;;')" >> $GITHUB_OUTPUT
+          
+      - name: Validate build version
+        if: ${{ steps.get_version.outputs.product_version != steps.get_version.outputs.build_version }}
+        env:
+          product_version: ${{ steps.get_version.outputs.product_version }}
+          build_version: ${{ steps.get_version.outputs.build_version }}
+        run: |
+          echo "Build version does not match product version"
+          echo "Build:" $build_version
+          echo "Product:" $product_version
+          exit 1
 
       - name: Validate composer.json and composer.lock
         run: |
@@ -64,13 +81,13 @@ jobs:
           echo "Product Mode: $(php ./product_mode.php)" >> build
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: orangehrm-${{ env.git_short_hash }}
           path: build/${{ env.file_path }}
 
       - name: Upload product mode
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.product_mode }}-mode
           path: build/build

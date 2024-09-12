@@ -4,24 +4,24 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
 
 use OrangeHRM\Admin\Api\Model\CurrencyTypeModel;
+use OrangeHRM\Admin\Dto\AllowedPayGradeCurrencySearchFilterParams;
 use OrangeHRM\Admin\Dto\PayGradeCurrencySearchFilterParams;
-use OrangeHRM\Admin\Service\PayGradeService;
+use OrangeHRM\Admin\Traits\Service\PayGradeServiceTrait;
 use OrangeHRM\Core\Api\CommonParams;
 use OrangeHRM\Core\Api\V2\CollectionEndpoint;
 use OrangeHRM\Core\Api\V2\EndpointCollectionResult;
@@ -33,26 +33,17 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Traits\ServiceContainerTrait;
-use OrangeHRM\Framework\Services;
 
 class PayGradeAllowedCurrencyAPI extends Endpoint implements CollectionEndpoint
 {
-    use ServiceContainerTrait;
-
-    /**
-     * @return PayGradeService
-     * @throws \Exception
-     */
-    public function getPayGradeService(): PayGradeService
-    {
-        return $this->getContainer()->get(Services::PAY_GRADE_SERVICE);
-    }
+    use PayGradeServiceTrait;
 
     /**
      * @OA\Get(
      *     path="/api/v2/admin/pay-grades/{payGradeId}/currencies/allowed",
-     *     tags={"Admin/Pay Grade"},
+     *     tags={"Admin/Pay Grade Currency"},
+     *     summary="List Allowed Currencies for Pay Grade",
+     *     operationId="list-allowed-currencies-for-pay-grade",
      *     @OA\PathParameter(
      *         name="payGradeId",
      *         @OA\Schema(type="integer")
@@ -88,10 +79,9 @@ class PayGradeAllowedCurrencyAPI extends Endpoint implements CollectionEndpoint
     public function getAll(): EndpointResult
     {
         $payGradeId = $this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_ATTRIBUTE, PayGradeCurrencySearchFilterParams::PARAMETER_PAY_GRADE_ID);
-        $payGradeCurrencySearchFilterParams = new PayGradeCurrencySearchFilterParams();
+        $payGradeCurrencySearchFilterParams = new AllowedPayGradeCurrencySearchFilterParams();
+        $this->setSortingAndPaginationParams($payGradeCurrencySearchFilterParams);
         $payGradeCurrencySearchFilterParams->setPayGradeId($payGradeId);
-        $payGradeCurrencySearchFilterParams->setSortField('ct.id');
-        $payGradeCurrencySearchFilterParams->setLimit(0);
         $allowedCurrencies = $this->getPayGradeService()->getAllowedPayCurrencies($payGradeCurrencySearchFilterParams);
         $count = $this->getPayGradeService()->getAllowedPayCurrenciesCount($payGradeCurrencySearchFilterParams);
         return new EndpointCollectionResult(
@@ -99,7 +89,7 @@ class PayGradeAllowedCurrencyAPI extends Endpoint implements CollectionEndpoint
             $allowedCurrencies,
             new ParameterBag([
                 PayGradeCurrencySearchFilterParams::PARAMETER_PAY_GRADE_ID => $payGradeId,
-                CommonParams::PARAMETER_TOTAL=> $count,
+                CommonParams::PARAMETER_TOTAL => $count,
             ])
         );
     }
@@ -114,7 +104,7 @@ class PayGradeAllowedCurrencyAPI extends Endpoint implements CollectionEndpoint
                 PayGradeCurrencySearchFilterParams::PARAMETER_PAY_GRADE_ID,
                 new Rule(Rules::POSITIVE)
             ),
-            ...$this->getSortingAndPaginationParamsRules(PayGradeCurrencySearchFilterParams::ALLOWED_SORT_FIELDS)
+            ...$this->getSortingAndPaginationParamsRules(AllowedPayGradeCurrencySearchFilterParams::ALLOWED_SORT_FIELDS)
         );
     }
 

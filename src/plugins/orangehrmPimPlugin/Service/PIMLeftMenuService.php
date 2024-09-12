@@ -4,23 +4,21 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Service;
 
 use OrangeHRM\Core\Exception\CoreServiceException;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Core\Exception\ServiceException;
 use OrangeHRM\Core\Traits\Auth\AuthUserTrait;
 use OrangeHRM\Core\Traits\ControllerTrait;
@@ -138,7 +136,6 @@ class PIMLeftMenuService
      * @param bool $self If true, indicates menu when user is looking at his own info
      * @return array Array of menu items.
      * @throws CoreServiceException
-     * @throws DaoException
      * @throws ServiceException
      */
     public function getMenuItems(?int $empNumber, bool $self): array
@@ -178,7 +175,6 @@ class PIMLeftMenuService
      * @param bool $self
      * @return bool
      * @throws CoreServiceException
-     * @throws DaoException
      * @throws ServiceException
      */
     public function isPimAccessible(?int $empNumber, bool $self): bool
@@ -193,7 +189,6 @@ class PIMLeftMenuService
      * @param bool $self
      * @return array
      * @throws CoreServiceException
-     * @throws DaoException
      * @throws ServiceException
      */
     protected function generateMenuItems(?int $empNumber, bool $self): array
@@ -228,8 +223,6 @@ class PIMLeftMenuService
     /**
      * @param int|null $empNumber
      * @return bool
-     * @throws DaoException
-     * @throws ServiceException
      */
     protected function isEmployeeWorkflowActionsAllowed(?int $empNumber): bool
     {
@@ -326,7 +319,6 @@ class PIMLeftMenuService
      * @param int $empNumber
      * @return array
      * @throws CoreServiceException
-     * @throws DaoException
      * @throws ServiceException
      */
     public function getPreparedMenuItems(int $empNumber): array

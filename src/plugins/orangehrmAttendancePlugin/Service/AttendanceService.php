@@ -5,17 +5,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Attendance\Service;
@@ -73,7 +72,7 @@ class AttendanceService
 
     /**
      * Set Attendance Data Access Object
-     * @param AttendanceDao $AttendanceDao
+     * @param AttendanceDao $attendanceDao
      * @return void
      */
     public function setAttendanceDao(AttendanceDao $attendanceDao)
@@ -303,7 +302,6 @@ class AttendanceService
      * @param int $employeeId
      * @param string $state
      * @return array|bool|Doctrine_Record|float|int|mixed|string|null
-     * @throws DaoException
      */
     public function getLatestPunchInRecord(int $employeeId, string $state)
     {
@@ -334,7 +332,6 @@ class AttendanceService
      * @param null $dateFrom
      * @param null $dateTo
      * @return array|Doctrine_Collection
-     * @throws DaoException
      */
     public function getAttendanceRecordsByEmpNumbers($empNumbers, $dateFrom = null, $dateTo = null)
     {

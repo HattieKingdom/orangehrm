@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Core\Dao;
@@ -252,8 +251,10 @@ class ReportGeneratorDao extends BaseDao
     {
         $q = $this->createQueryBuilder(Report::class, 'report');
         $q->delete()
-            ->where($q->expr()->in('report.id', ':ids'))
-            ->setParameter('ids', $deletedIds);
+            ->andWhere($q->expr()->in('report.id', ':ids'))
+            ->andWhere($q->expr()->eq('report.reportGroup', ':reportGroupId'))
+            ->setParameter('ids', $deletedIds)
+            ->setParameter('reportGroupId', ReportGroup::REPORT_GROUP_PIM);
         return $q->getQuery()->execute();
     }
 
@@ -265,6 +266,23 @@ class ReportGeneratorDao extends BaseDao
     {
         $report = $this->getRepository(Report::class)->find($reportId);
         return ($report instanceof Report) ? $report : null;
+    }
+
+    /**
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function getExistingReportIdsForPim(array $ids): array
+    {
+        $qb = $this->createQueryBuilder(Report::class, 'report');
+
+        $qb->select('report.id')
+            ->andWhere($qb->expr()->in('report.id', ':ids'))
+            ->andWhere($qb->expr()->eq('report.reportGroup', ':reportGroupId'))
+            ->setParameter('ids', $ids)
+            ->setParameter('reportGroupId', ReportGroup::REPORT_GROUP_PIM);
+
+        return $qb->getQuery()->getSingleColumnResult();
     }
 
     /**
@@ -398,28 +416,15 @@ class ReportGeneratorDao extends BaseDao
      */
     public function getDisplayFieldGroupIdList(int $reportId): array
     {
-        // this method for getting all display field group ids that saved in the database
-        $displayFieldGroups = $this->getDisplayFieldGroupIds($reportId);
-        $displayFieldGroupIds = [];
-        foreach ($displayFieldGroups as $displayFieldGroup) {
-            array_push($displayFieldGroupIds, $displayFieldGroup->getDisplayFieldGroup()->getId());
-        }
-        return $displayFieldGroupIds;
-    }
-
-    /**
-     * @param int $reportId
-     * @return DisplayField[]
-     */
-    public function getDisplayFieldGroupIds(int $reportId): array
-    {
-        $q = $this->createQueryBuilder(DisplayField::class, 'df');
-        $q->leftJoin('df.displayFieldGroup', 'dfg');
-        $q->leftJoin('df.selectedDisplayFields', 'sdf');
-        $q->andWhere('sdf.report = :reportId')
+        $q = $this->createQueryBuilder(DisplayField::class, 'displayField');
+        $q->select('IDENTITY(displayField.displayFieldGroup) as displayFieldGroupId');
+        $q->leftJoin('displayField.displayFieldGroup', 'displayFieldGroup');
+        $q->leftJoin('displayField.selectedDisplayFields', 'selectedDisplayFields');
+        $q->andWhere($q->expr()->eq('selectedDisplayFields.report', ':reportId'))
             ->setParameter('reportId', $reportId);
-        $q->groupBy('df.displayFieldGroup');
-        return $q->getQuery()->execute();
+        $q->groupBy('displayFieldGroupId');
+
+        return array_column($q->getQuery()->execute(), 'displayFieldGroupId');
     }
 
     /**

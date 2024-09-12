@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Claim\Api;
@@ -74,6 +73,8 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/claim/requests/{requestId}/expenses",
      *     tags={"Claim/Expenses"},
+     *     summary="List All Expenses from a Claim",
+     *     operationId="list-all-expenses-from-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
@@ -151,6 +152,8 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/claim/requests/{requestId}/expenses",
      *     tags={"Claim/Expenses"},
+     *     summary="Add an Expense to a Claim",
+     *     operationId="add-an-expense-to-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
@@ -159,10 +162,10 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="expenseTypeId", type="integer"),
-     *             @OA\Property(property="amount", type="float"),
+     *             @OA\Property(property="amount", type="float", minimum=0, maximum=9999999999.99),
      *             @OA\Property(property="requestId", type="integer"),
-     *             @OA\Property(property="note", type="string"),
-     *             @OA\Property(property="date", type="datetime"),
+     *             @OA\Property(property="note", type="string", maxLength=OrangeHRM\Claim\Api\ClaimExpenseAPI::NOTE_MAX_LENGTH),
+     *             @OA\Property(property="date", type="string", format="date"),
      *             required={"name", "expenseTypeId", "amount", "requestId", "date"}
      *         )
      *     ),
@@ -177,7 +180,7 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
      *         )
      *     )
      * )
-     * @inheritDoc
+     * @inheritDocG409
      */
     public function create(): EndpointResult
     {
@@ -285,12 +288,16 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Delete(
      *     path="/api/v2/claim/requests/{requestId}/expenses",
      *     tags={"Claim/Expenses"},
+     *     summary="Remove an Expense from a Claim",
+     *     operationId="remove-an-expense-from-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="403", ref="#/components/responses/ForbiddenResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      * @inheritDoc
      */
@@ -302,8 +309,11 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
 
         $this->isActionAllowed(WorkflowStateMachine::CLAIM_ACTION_SUBMIT, $claimRequest);
 
-        $ids = $this->getRequestParams()
-            ->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getClaimService()->getClaimDao()->getExistingClaimExpenseIdsForRequestId(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS),
+            $requestId
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getClaimService()
             ->getClaimDao()
             ->deleteClaimExpense($requestId, $ids);
@@ -332,6 +342,8 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/claim/requests/{requestId}/expenses/{id}",
      *     tags={"Claim/Expenses"},
+     *     summary="Get an Expense from a Claim",
+     *     operationId="get-an-expense-from-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
@@ -395,6 +407,8 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/claim/requests/{requestId}/expenses/{id}",
      *     tags={"Claim/Expenses"},
+     *     summary="Update an Expense from a Claim",
+     *     operationId="update-an-expense-from-a-claim",
      *     @OA\PathParameter(
      *         name="requestId",
      *         @OA\Schema(type="integer")
@@ -406,9 +420,9 @@ class ClaimExpenseAPI extends Endpoint implements CrudEndpoint
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             @OA\Property(property="expenseTypeId", type="integer"),
-     *             @OA\Property(property="date", type="string"),
-     *             @OA\Property(property="amount", type="float"),
-     *             @OA\Property(property="note", type="string")
+     *             @OA\Property(property="date", type="string", format="date"),
+     *             @OA\Property(property="amount", type="float", minimum=0, maximum=9999999999.99),
+     *             @OA\Property(property="note", type="string", maxLength=OrangeHRM\Claim\Api\ClaimExpenseAPI::NOTE_MAX_LENGTH)
      *         )
      *     ),
      *     @OA\Response(

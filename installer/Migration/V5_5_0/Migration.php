@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Installer\Migration\V5_5_0;
@@ -25,6 +24,7 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use OrangeHRM\Entity\WorkflowStateMachine;
 use OrangeHRM\Installer\Util\V1\AbstractMigration;
+use OrangeHRM\Installer\Util\V1\LangStringHelper;
 
 class Migration extends AbstractMigration
 {
@@ -39,10 +39,18 @@ class Migration extends AbstractMigration
         $groups = ['claim', 'general'];
         $this->getLangStringHelper()->deleteNonCustomizedLangStrings('claim');
         foreach ($groups as $group) {
-            $this->getLangStringHelper()->insertOrUpdateLangStrings($group);
+            $this->getLangStringHelper()->insertOrUpdateLangStrings(__DIR__, $group);
         }
 
         $this->updateLangStringVersion($this->getVersion());
+
+        $this->deleteLangStringTranslationByLangStringUnitId(
+            'this_page_is_being_developed'
+        );
+
+        $this->deleteLangStringTranslationByLangStringUnitId(
+            'download_latest_release_with_all_features'
+        );
 
         $this->getLangHelper()->deleteLangStringByUnitId(
             'this_page_is_being_developed',
@@ -734,6 +742,23 @@ class Migration extends AbstractMigration
             ->setParameter('groupId', $this->getLangHelper()->getGroupIdByName('general'));
         $qb->andWhere($qb->expr()->in('langString.unit_id', ':unitIdToChangeGroup'))
             ->setParameter('unitIdToChangeGroup', 'today')
+            ->executeQuery();
+    }
+
+    private function deleteLangStringTranslationByLangStringUnitId(string $unitId): void
+    {
+        $id = $this->getConnection()->createQueryBuilder()
+            ->select('id')
+            ->from('ohrm_i18n_lang_string', 'langString')
+            ->andWhere('langString.unit_id = :unitId')
+            ->setParameter('unitId', $unitId)
+            ->executeQuery()
+            ->fetchOne();
+
+        $this->createQueryBuilder()
+            ->delete('ohrm_i18n_translate')
+            ->andWhere('ohrm_i18n_translate.lang_string_id = :id')
+            ->setParameter('id', $id)
             ->executeQuery();
     }
 }

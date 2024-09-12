@@ -4,23 +4,20 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Pim\Service;
 
-use OrangeHRM\Core\Api\V2\Serializer\NormalizeException;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Core\Traits\Service\NormalizerServiceTrait;
 use OrangeHRM\Entity\ReportingMethod;
 use OrangeHRM\Pim\Dao\ReportingMethodConfigurationDao;
@@ -59,7 +56,6 @@ class ReportingMethodConfigurationService
     /**
      * @param ReportingMethod $reportingMethod
      * @return ReportingMethod
-     * @throws DaoException
      */
     public function saveReportingMethod(ReportingMethod $reportingMethod): ReportingMethod
     {
@@ -69,7 +65,6 @@ class ReportingMethodConfigurationService
     /**
      * @param int $id
      * @return ReportingMethod|null
-     * @throws DaoException
      */
     public function getReportingMethodById(int $id): ?ReportingMethod
     {
@@ -79,7 +74,6 @@ class ReportingMethodConfigurationService
     /**
      * @param string $name
      * @return ReportingMethod|null
-     * @throws DaoException
      */
     public function getReportingMethodByName(string $name): ?ReportingMethod
     {
@@ -89,7 +83,6 @@ class ReportingMethodConfigurationService
     /**
      * @param ReportingMethodSearchFilterParams $reportingMethodSearchFilterParams
      * @return array
-     * @throws DaoException
      */
     public function getReportingMethodList(ReportingMethodSearchFilterParams $reportingMethodSearchFilterParams): array
     {
@@ -99,7 +92,6 @@ class ReportingMethodConfigurationService
     /**
      * @param ReportingMethodSearchFilterParams $reportingMethodSearchFilterParams
      * @return int
-     * @throws DaoException
      */
     public function getReportingMethodCount(ReportingMethodSearchFilterParams $reportingMethodSearchFilterParams): int
     {
@@ -109,7 +101,6 @@ class ReportingMethodConfigurationService
     /**
      * @param array $toDeleteIds
      * @return int
-     * @throws DaoException
      */
     public function deleteReportingMethods(array $toDeleteIds): int
     {
@@ -119,7 +110,6 @@ class ReportingMethodConfigurationService
     /**
      * @param string $reportingMethodName
      * @return bool
-     * @throws DaoException
      */
     public function isExistingReportingMethodName(string $reportingMethodName): bool
     {
@@ -128,7 +118,6 @@ class ReportingMethodConfigurationService
 
     /**
      * @return int[]
-     * @throws DaoException
      */
     public function getReportingMethodIdsInUse(): array
     {
@@ -136,8 +125,8 @@ class ReportingMethodConfigurationService
     }
 
     /**
-     * @throws NormalizeException
-     * @throws DaoException
+     * @param ReportingMethodSearchFilterParams $reportingMethodSearchFilterParams
+     * @return array
      */
     public function getReportingMethodArray(ReportingMethodSearchFilterParams $reportingMethodSearchFilterParams): array
     {

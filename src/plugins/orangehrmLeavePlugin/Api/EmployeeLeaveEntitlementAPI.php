@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Leave\Api;
@@ -55,6 +54,8 @@ class EmployeeLeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/leave/employees/{empNumber}/leave-entitlements",
      *     tags={"Leave/Entitlements"},
+     *     summary="Get an Employee's Leave Entitlement",
+     *     operationId="get-an-employees-leave-entitlement",
      *     @OA\PathParameter(
      *         name="empNumber",
      *         @OA\Schema(type="integer")
@@ -137,6 +138,8 @@ class EmployeeLeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/leave/employees/leave-entitlements",
      *     tags={"Leave/Entitlements"},
+     *     summary="List an Employee's Leave Entitlements",
+     *     operationId="list-an-employees-leave-entitlements",
      *     @OA\Parameter(
      *         name="leaveTypeId",
      *         in="query",
@@ -317,7 +320,12 @@ class EmployeeLeaveEntitlementAPI extends Endpoint implements CrudEndpoint
      */
     private function getLeaveTypeIdRule(): ParamRule
     {
-        return new ParamRule(LeaveCommonParams::PARAMETER_LEAVE_TYPE_ID, new Rule(LeaveTypeIdRule::class));
+        return new ParamRule(
+            LeaveCommonParams::PARAMETER_LEAVE_TYPE_ID,
+            new Rule(Rules::INT_VAL),
+            new Rule(Rules::POSITIVE),
+            new Rule(LeaveTypeIdRule::class)
+        );
     }
 
     /**

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -65,6 +64,7 @@ import {
   shouldNotExceedCharLength,
 } from '@ohrm/core/util/validation/rules';
 import {OxdDialog} from '@ohrm/oxd';
+import useServerValidation from '@/core/util/composable/useServerValidation';
 
 const subscriberModel = {
   name: '',
@@ -88,8 +88,19 @@ export default {
       window.appGlobal.baseUrl,
       `/api/v2/admin/email-subscriptions/${props.data.subscriptionId}/subscribers`,
     );
+    const {createUniqueValidator} = useServerValidation(http);
+    const subscriberUniqueValidation = createUniqueValidator(
+      'EmailSubscriber',
+      'email',
+      {
+        matchByField: 'emailNotification',
+        matchByValue: props.data.subscriptionId,
+      },
+    );
+
     return {
       http,
+      subscriberUniqueValidation,
     };
   },
   data() {
@@ -98,30 +109,14 @@ export default {
       subscriber: {...subscriberModel},
       rules: {
         name: [required, shouldNotExceedCharLength(100)],
-        email: [required, validEmailFormat, shouldNotExceedCharLength(100)],
+        email: [
+          required,
+          validEmailFormat,
+          this.subscriberUniqueValidation,
+          shouldNotExceedCharLength(100),
+        ],
       },
     };
-  },
-  beforeMount() {
-    this.isLoading = true;
-    this.http
-      .getAll()
-      .then((response) => {
-        const {data} = response.data;
-        if (data) {
-          this.rules.email.push((v) => {
-            const index = data.findIndex((item) => item.email == v);
-            if (index > -1) {
-              return this.$t('general.already_exists');
-            } else {
-              return true;
-            }
-          });
-        }
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
   },
   methods: {
     onSave() {

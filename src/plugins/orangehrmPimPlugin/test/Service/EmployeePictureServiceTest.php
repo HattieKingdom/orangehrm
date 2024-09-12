@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Tests\Pim\Service;
@@ -23,12 +22,15 @@ use Generator;
 use OrangeHRM\Config\Config;
 use OrangeHRM\Core\Authorization\Helper\UserRoleManagerHelper;
 use OrangeHRM\Core\Authorization\Manager\BasicUserRoleManager;
+use OrangeHRM\Core\Traits\ETagHelperTrait;
+use OrangeHRM\Core\Traits\ORM\EntityManagerHelperTrait;
 use OrangeHRM\Entity\Employee;
 use OrangeHRM\Entity\EmpPicture;
 use OrangeHRM\Framework\Services;
 use OrangeHRM\Pim\Dao\EmployeePictureDao;
 use OrangeHRM\Pim\Service\EmployeePictureService;
 use OrangeHRM\Tests\Util\KernelTestCase;
+use OrangeHRM\Tests\Util\Mock\MockCacheService;
 
 /**
  * @group Pim
@@ -36,6 +38,9 @@ use OrangeHRM\Tests\Util\KernelTestCase;
  */
 class EmployeePictureServiceTest extends KernelTestCase
 {
+    use ETagHelperTrait;
+    use EntityManagerHelperTrait;
+
     public function testGetEmployeePictureDao(): void
     {
         $service = new EmployeePictureService();
@@ -195,5 +200,29 @@ class EmployeePictureServiceTest extends KernelTestCase
         yield [file_get_contents($fixturesBasePath . '200x200.jpeg'), [200, 200]];
         yield [file_get_contents($fixturesBasePath . '225x115.jpeg'), [200, 102]];
         yield [file_get_contents($fixturesBasePath . '225x225.jpeg'), [200, 200]];
+    }
+
+    public function testGetETagByEmpPicture(): void
+    {
+        $this->createKernelWithMockServices([Services::CACHE => MockCacheService::getCache()]);
+        $pictureData = 'test_picture';
+        $employee = new Employee();
+        $employee->setEmpNumber(1);
+        $empPicture = new EmpPicture();
+        $empPicture->setPicture($pictureData);
+        $empPicture->setEmployee($employee);
+
+        $service = $this->getMockBuilder(EmployeePictureService::class)
+            ->onlyMethods(['getEmpPictureByEmpNumber'])
+            ->getMock();
+        $service->expects($this->once())
+            ->method('getEmpPictureByEmpNumber')
+            ->with(1)
+            ->willReturn($empPicture);
+
+        $expected = $this->generateEtag($empPicture->getDecorator()->getPicture());
+        $this->assertEquals($expected, $service->getEmpPictureETagByEmpNumber(1));
+
+        $this->getEntityManager()->flush();
     }
 }

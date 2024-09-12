@@ -4,22 +4,22 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Tests\OAuth\Repository;
 
 use DateTime;
+use Error;
 use DateTimeImmutable;
 use League\OAuth2\Server\CryptTrait;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
@@ -117,7 +117,9 @@ class AccessTokenRepositoryTest extends KernelTestCase
     {
         $clientEntity = ClientEntity::createFromEntity($this->getEntityReference(OAuthClient::class, 1));
         $token = $this->accessTokenRepository->getNewToken($clientEntity, [], 100);
-        $this->expectErrorMessage(
+        //https://github.com/sebastianbergmann/phpunit/issues/5062
+        $this->expectException(Error::class);
+        $this->expectExceptionMessage(
             'Typed property OrangeHRM\OAuth\Dto\Entity\AccessTokenEntity::$expiryDateTime must not be accessed before initialization'
         );
         $token->getExpiryDateTime();
@@ -127,7 +129,9 @@ class AccessTokenRepositoryTest extends KernelTestCase
     {
         $clientEntity = ClientEntity::createFromEntity($this->getEntityReference(OAuthClient::class, 1));
         $token = $this->accessTokenRepository->getNewToken($clientEntity, [], 100);
-        $this->expectErrorMessage(
+        //https://github.com/sebastianbergmann/phpunit/issues/5062
+        $this->expectException(Error::class);
+        $this->expectExceptionMessage(
             'Typed property OrangeHRM\OAuth\Dto\Entity\AccessTokenEntity::$identifier must not be accessed before initialization'
         );
         $token->getIdentifier();

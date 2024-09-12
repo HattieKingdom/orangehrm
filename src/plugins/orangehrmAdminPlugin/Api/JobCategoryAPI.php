@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -34,7 +33,7 @@ use OrangeHRM\Core\Api\V2\Validator\ParamRule;
 use OrangeHRM\Core\Api\V2\Validator\ParamRuleCollection;
 use OrangeHRM\Core\Api\V2\Validator\Rule;
 use OrangeHRM\Core\Api\V2\Validator\Rules;
-use OrangeHRM\Core\Exception\DaoException;
+use OrangeHRM\Core\Api\V2\Validator\Rules\EntityUniquePropertyOption;
 use OrangeHRM\Entity\JobCategory;
 
 class JobCategoryAPI extends Endpoint implements CrudEndpoint
@@ -49,6 +48,7 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
     public const PARAMETER_SORT_ORDER = 'sortOrder';
     public const PARAMETER_OFFSET = 'offset';
     public const PARAMETER_LIMIT = 'limit';
+    public const PARAM_RULE_NAME_MAX_LENGTH = 50;
 
     /**
      * @return JobCategoryService
@@ -62,17 +62,11 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
     }
 
     /**
-     * @param JobCategoryService $jobCategoryService
-     */
-    public function setJobCategoryService(JobCategoryService $jobCategoryService)
-    {
-        $this->jobCategoryService = $jobCategoryService;
-    }
-
-    /**
      * @OA\Get(
      *     path="/api/v2/admin/job-categories/{id}",
      *     tags={"Admin/Job Category"},
+     *     summary="Get a Job Category",
+     *     operationId="get-a-job-category",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -121,6 +115,8 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/job-categories",
      *     tags={"Admin/Job Category"},
+     *     summary="List All Job Categories",
+     *     operationId="list-all-job-categories",
      *     @OA\Parameter(
      *         name="sortField",
      *         in="query",
@@ -195,10 +191,12 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
      * @OA\Post(
      *     path="/api/v2/admin/job-categories",
      *     tags={"Admin/Job Category"},
+     *     summary="Create a Job Category",
+     *     operationId="create-a-job-category",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\JobCategoryAPI::PARAM_RULE_NAME_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),
@@ -218,7 +216,8 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
      */
     public function create(): EndpointResourceResult
     {
-        $jobCategory = $this->saveJobCategory();
+        $jobCategory = new JobCategory();
+        $jobCategory = $this->saveJobCategory($jobCategory);
 
         return new EndpointResourceResult(JobCategoryModel::class, $jobCategory);
     }
@@ -229,7 +228,7 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
     public function getValidationRuleForCreate(): ParamRuleCollection
     {
         return new ParamRuleCollection(
-            new ParamRule(self::PARAMETER_NAME),
+            $this->getNameRule()
         );
     }
 
@@ -237,6 +236,8 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/job-categories/{id}",
      *     tags={"Admin/Job Category"},
+     *     summary="Update a Job Category",
+     *     operationId="update-a-job-category",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -244,7 +245,7 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\JobCategoryAPI::PARAM_RULE_NAME_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),
@@ -265,8 +266,9 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
      */
     public function update(): EndpointResourceResult
     {
-        $jobCategory = $this->saveJobCategory();
-
+        $jobCategory = $this->getJobCategoryService()->getJobCategoryById($this->getAttributeId());
+        $this->throwRecordNotFoundExceptionIfNotExist($jobCategory, JobCategory::class);
+        $jobCategory = $this->saveJobCategory($jobCategory);
         return new EndpointResourceResult(JobCategoryModel::class, $jobCategory);
     }
 
@@ -275,47 +277,64 @@ class JobCategoryAPI extends Endpoint implements CrudEndpoint
      */
     public function getValidationRuleForUpdate(): ParamRuleCollection
     {
+        $uniqueOption = new EntityUniquePropertyOption();
+        $uniqueOption->setIgnoreId($this->getAttributeId());
+
         return new ParamRuleCollection(
             new ParamRule(
                 CommonParams::PARAMETER_ID,
                 new Rule(Rules::POSITIVE)
             ),
-            new ParamRule(self::PARAMETER_NAME),
+            $this->getNameRule($uniqueOption)
         );
     }
 
     /**
+     * @param JobCategory $jobCategory
      * @return JobCategory
-     * @throws DaoException
      */
-    private function saveJobCategory(): JobCategory
+    private function saveJobCategory(JobCategory $jobCategory): JobCategory
     {
-        $id = $this->getRequestParams()->getInt(RequestParams::PARAM_TYPE_ATTRIBUTE, CommonParams::PARAMETER_ID);
         $name = $this->getRequestParams()->getString(RequestParams::PARAM_TYPE_BODY, self::PARAMETER_NAME);
-        if (!empty($id)) {
-            $jobCategory = $this->getJobCategoryService()->getJobCategoryById($id);
-        } else {
-            $jobCategory = new JobCategory();
-        }
-
         $jobCategory->setName($name);
         return $this->getJobCategoryService()->saveJobCategory($jobCategory);
+    }
+
+    /**
+     * @param EntityUniquePropertyOption|null $uniqueOption
+     * @return ParamRule
+     */
+    private function getNameRule(?EntityUniquePropertyOption $uniqueOption = null): ParamRule
+    {
+        return $this->getValidationDecorator()->requiredParamRule(
+            new ParamRule(
+                self::PARAMETER_NAME,
+                new Rule(Rules::STRING_TYPE),
+                new Rule(Rules::LENGTH, [null, self::PARAM_RULE_NAME_MAX_LENGTH]),
+                new Rule(Rules::ENTITY_UNIQUE_PROPERTY, [JobCategory::class, 'name', $uniqueOption])
+            )
+        );
     }
 
     /**
      * @OA\Delete(
      *     path="/api/v2/admin/job-categories",
      *     tags={"Admin/Job Category"},
+     *     summary="Delete Job Categories",
+     *     operationId="delete-job-categories",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
-     * @throws DaoException
      */
     public function delete(): EndpointResourceResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getJobCategoryService()->getJobCategoryDao()->getExistingJobCategoryIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getJobCategoryService()->deleteJobCategory($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }

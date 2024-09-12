@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Tests\Admin\Dao;
@@ -106,24 +105,5 @@ class EmailSubscriberDaoTest extends TestCase
         $toTobedeletedIds = [1, 2];
         $result = $this->emailSubscriberDao->deleteEmailSubscribersByIds($toTobedeletedIds);
         $this->assertEquals(2, $result);
-    }
-
-    public function testIsSubscriberEmailUnique(): void
-    {
-        //Check non existent email
-        $result = $this->emailSubscriberDao->isSubscriberEmailUnique("chenuka@ohrm.com", 1);
-        $this->assertTrue($result);
-
-        //Check existing email in a subscription
-        $result = $this->emailSubscriberDao->isSubscriberEmailUnique("devi@ohrm.com", 3);
-        $this->assertFalse($result);
-
-        //Check existing email in a different subscription
-        $result = $this->emailSubscriberDao->isSubscriberEmailUnique("sharuka@ohrm.com", 1);
-        $this->assertTrue($result);
-
-        //Check existing email in same subscription with ignore id set
-        $result = $this->emailSubscriberDao->isSubscriberEmailUnique("devi@ohrm.com", 3, 3);
-        $this->assertTrue($result);
     }
 }

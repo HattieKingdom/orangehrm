@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
  -->
 
@@ -96,7 +95,7 @@
                 :rules="rules.clientLogo"
                 :hint="
                   $t('general.accept_jpg_png_gif_upto_recommended_dimensions', {
-                    fileSize: '1MB',
+                    fileSize: formattedFileSize,
                     width: 50,
                     height: 50,
                   })
@@ -115,7 +114,7 @@
                 :rules="rules.clientBanner"
                 :hint="
                   $t('general.accept_jpg_png_gif_upto_recommended_dimensions', {
-                    fileSize: '1MB',
+                    fileSize: formattedFileSize,
                     width: 182,
                     height: 50,
                   })
@@ -134,7 +133,7 @@
                 :rules="rules.loginBanner"
                 :hint="
                   $t('general.accept_jpg_png_gif_upto_recommended_dimensions', {
-                    fileSize: '1MB',
+                    fileSize: formattedFileSize,
                     width: 340,
                     height: 65,
                   })
@@ -239,6 +238,10 @@ export default {
       type: Number,
       required: true,
     },
+    maxFileSize: {
+      type: Number,
+      required: true,
+    },
   },
   setup(props) {
     const http = new APIService(
@@ -271,7 +274,7 @@ export default {
       clientLogo: [
         (v) =>
           state.clientLogo.method === 'replaceCurrent' ? required(v) : true,
-        maxFileSize(1024 * 1024),
+        maxFileSize(props.maxFileSize),
         imageShouldHaveDimensions(
           props.aspectRatios.clientLogo,
           props.aspectRatioTolerance,
@@ -281,7 +284,7 @@ export default {
       clientBanner: [
         (v) =>
           state.clientBanner.method === 'replaceCurrent' ? required(v) : true,
-        maxFileSize(1024 * 1024),
+        maxFileSize(props.maxFileSize),
         imageShouldHaveDimensions(
           props.aspectRatios.clientBanner,
           props.aspectRatioTolerance,
@@ -291,7 +294,7 @@ export default {
       loginBanner: [
         (v) =>
           state.loginBanner.method === 'replaceCurrent' ? required(v) : true,
-        maxFileSize(1024 * 1024),
+        maxFileSize(props.maxFileSize),
         imageShouldHaveDimensions(
           props.aspectRatios.loginBanner,
           props.aspectRatioTolerance,
@@ -410,6 +413,12 @@ export default {
       onClickPreview,
       ...toRefs(state),
     };
+  },
+  computed: {
+    formattedFileSize() {
+      let size = Math.round((this.maxFileSize / (1024 * 1024)) * 100) / 100;
+      return size === 1 ? size + 'MB' : size + 'MBs';
+    },
   },
 };
 </script>

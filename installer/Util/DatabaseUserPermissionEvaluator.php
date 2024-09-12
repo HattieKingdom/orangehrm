@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Installer\Util;
@@ -104,20 +103,6 @@ class DatabaseUserPermissionEvaluator
         if ($count != 10) {
             throw new Exception('Invalid record count');
         }
-
-        // Start - group by test
-        $result = $this->getConnection()->createQueryBuilder()
-            ->select('COUNT(_ohrm_temp_table.id) AS rowCount')
-            ->from('_ohrm_temp_table')
-            ->andWhere('_ohrm_temp_table.col_bool = :valueTrue')
-            ->addOrderBy('_ohrm_temp_table.col_string', 'DESC')
-            ->addGroupBy('_ohrm_temp_table.col_nullable')
-            ->setParameter('valueTrue', false, Types::BOOLEAN)
-            ->executeQuery();
-        if ($result->fetchFirstColumn() != [2, 3]) {
-            throw new Exception('Invalid result');
-        }
-        // End - group by test
 
         // Start - order by test
         $this->getConnection()->createQueryBuilder()

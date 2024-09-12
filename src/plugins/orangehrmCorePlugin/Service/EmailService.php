@@ -4,32 +4,30 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Core\Service;
 
 use OrangeHRM\Admin\Service\EmailConfigurationService;
-use OrangeHRM\Authentication\Auth\User as AuthUser;
 use OrangeHRM\Config\Config;
 use OrangeHRM\Core\Dao\EmailDao;
 use OrangeHRM\Core\Exception\CoreServiceException;
-use OrangeHRM\Core\Exception\DaoException;
 use OrangeHRM\Core\Exception\ServiceException as Exception;
 use OrangeHRM\Core\Mail\AbstractRecipient;
 use OrangeHRM\Core\Mail\MailProcessor;
 use OrangeHRM\Core\Mail\TemplateHelper;
 use OrangeHRM\Core\Traits\Auth\AuthUserTrait;
+use OrangeHRM\Core\Traits\CacheTrait;
 use OrangeHRM\Core\Traits\ClassHelperTrait;
 use OrangeHRM\Core\Traits\LoggerTrait;
 use OrangeHRM\Core\Traits\Service\ConfigServiceTrait;
@@ -46,6 +44,7 @@ class EmailService
     use ConfigServiceTrait;
     use ClassHelperTrait;
     use AuthUserTrait;
+    use CacheTrait;
 
     public const SMTP_SECURITY_NONE = 'none';
     public const SMTP_SECURITY_TLS = 'tls';
@@ -239,7 +238,6 @@ class EmailService
 
     /**
      * @throws CoreServiceException
-     * @throws DaoException
      */
     protected function loadConfiguration(): void
     {
@@ -507,7 +505,15 @@ class EmailService
         Event $eventData
     ): void {
         if ($this->isConfigSet()) {
-            $this->getAuthUser()->addFlash(AuthUser::FLASH_SEND_EMAIL_FLAG, true);
+            $cacheItem = $this->getCache()->getItem('core.send_email');
+            if (!$cacheItem->isHit()) {
+                $cacheItem->expiresAfter(600);
+                $cacheItem->set(true);
+                $this->getCache()->save($cacheItem);
+            } elseif (!$cacheItem->get()) {
+                $cacheItem->set(true);
+                $this->getCache()->save($cacheItem);
+            }
             foreach ($recipientRoles as $role) {
                 $this->queueEmailNotification($emailName, $role, $performerRole, $eventData);
             }

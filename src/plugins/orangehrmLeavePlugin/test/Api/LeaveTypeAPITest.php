@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Tests\Leave\Api;
@@ -98,10 +97,10 @@ class LeaveTypeAPITest extends EndpointTestCase
         $result = $api->getOne();
         $this->assertEquals(
             [
-                "id"=> 1,
-                "name"=> "Casual",
-                "deleted"=> false,
-                "situational"=> false
+                "id" => 1,
+                "name" => "Casual",
+                "deleted" => false,
+                "situational" => false
             ],
             $result->normalize()
         );
@@ -183,10 +182,10 @@ class LeaveTypeAPITest extends EndpointTestCase
         $result = $api->update();
         $this->assertEquals(
             [
-                "id"=> 1,
-                "name"=> "Casual New",
-                "deleted"=> false,
-                "situational"=> false,
+                "id" => 1,
+                "name" => "Casual New",
+                "deleted" => false,
+                "situational" => false,
             ],
             $result->normalize()
         );
@@ -214,7 +213,7 @@ class LeaveTypeAPITest extends EndpointTestCase
             ->onlyMethods(['deleteLeaveType'])
             ->getMock();
 
-        $leaveTypeDao->expects($this->exactly(1))
+        $leaveTypeDao->expects($this->exactly(0))
             ->method('deleteLeaveType')
             ->with([1])
             ->willReturn(1);
@@ -223,7 +222,7 @@ class LeaveTypeAPITest extends EndpointTestCase
             ->onlyMethods(['getLeaveTypeDao'])
             ->getMock();
 
-        $leaveTypeService->expects($this->exactly(1))
+        $leaveTypeService->expects($this->exactly(0))
             ->method('getLeaveTypeDao')
             ->willReturn($leaveTypeDao);
 
@@ -237,17 +236,9 @@ class LeaveTypeAPITest extends EndpointTestCase
             ]
         )->onlyMethods(['getLeaveTypeService'])
             ->getMock();
-        $api->expects($this->exactly(1))
-            ->method('getLeaveTypeService')
-            ->will($this->returnValue($leaveTypeService));
 
+        $this->expectRecordNotFoundException();
         $result = $api->delete();
-        $this->assertEquals(
-            [
-                1
-            ],
-            $result->normalize()
-        );
     }
 
     public function testGetValidationRuleForDelete(): void
@@ -321,10 +312,10 @@ class LeaveTypeAPITest extends EndpointTestCase
         $result = $api->create();
         $this->assertEquals(
             [
-                "id"=> 1,
-                "name"=> "Casual",
-                "deleted"=> false,
-                "situational"=> false
+                "id" => 1,
+                "name" => "Casual",
+                "deleted" => false,
+                "situational" => false
             ],
             $result->normalize()
         );
@@ -398,16 +389,16 @@ class LeaveTypeAPITest extends EndpointTestCase
         $this->assertEquals(
             [
                 [
-                    "id"=> 1,
-                    "name"=> "Casual",
-                    "deleted"=> false,
-                    "situational"=> false,
+                    "id" => 1,
+                    "name" => "Casual",
+                    "deleted" => false,
+                    "situational" => false,
                 ],
                 [
-                    "id"=> 2,
-                    "name"=> "Medical",
-                    "deleted"=> false,
-                    "situational"=> false,
+                    "id" => 2,
+                    "name" => "Medical",
+                    "deleted" => false,
+                    "situational" => false,
                 ]
             ],
             $result->normalize()

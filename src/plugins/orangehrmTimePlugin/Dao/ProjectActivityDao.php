@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Time\Dao;
@@ -119,6 +118,26 @@ class ProjectActivityDao extends BaseDao
     }
 
     /**
+     * @param int[] $ids
+     * @param int $projectId
+     * @return int[]
+     */
+    public function getExistingProjectActivityIdsForProject(array $ids, int $projectId): array
+    {
+        $qb = $this->createQueryBuilder(ProjectActivity::class, 'projectActivity');
+
+        $qb->select('projectActivity.id')
+            ->andWhere($qb->expr()->in('projectActivity.id', ':ids'))
+            ->andWhere($qb->expr()->eq('projectActivity.project', ':projectId'))
+            ->andWhere($qb->expr()->eq('projectActivity.deleted', ':deleted'))
+            ->setParameter('ids', $ids)
+            ->setParameter('projectId', $projectId)
+            ->setParameter('deleted', false);
+
+        return $qb->getQuery()->getSingleColumnResult();
+    }
+
+    /**
      * @param int $activityId
      * @return bool
      */
@@ -198,8 +217,16 @@ class ProjectActivityDao extends BaseDao
             ->setParameter('deleted', false);
         $q->groupBy('activity.name')
             ->having('counter >= 2')
-            ->select('activity, COUNT(activity.id) AS HIDDEN counter');
-        return $q->getQuery()->execute();
+            ->select('activity.name, COUNT(activity.name) AS HIDDEN counter');
+
+        $duplicatedActivityNames = array_column($q->getQuery()->execute(), 'name');
+
+        return $this->createQueryBuilder(ProjectActivity::class, 'activity')
+            ->andWhere($q->expr()->in('activity.name', ':duplicatedActivities'))
+            ->andWhere($q->expr()->eq('activity.project', ':projectId'))
+            ->setParameter('duplicatedActivities', $duplicatedActivityNames)
+            ->setParameter('projectId', $fromProjectId)
+            ->getQuery()->execute();
     }
 
     /**

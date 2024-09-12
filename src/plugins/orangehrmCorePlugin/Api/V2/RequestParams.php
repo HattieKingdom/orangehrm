@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Core\Api\V2;
@@ -25,9 +24,14 @@ use InvalidArgumentException;
 use OpenApi\Annotations as OA;
 use OrangeHRM\Core\Api\V2\Exception\InvalidParamException;
 use OrangeHRM\Core\Dto\Base64Attachment;
+use OrangeHRM\Core\Exception\SanitizerException;
+use OrangeHRM\Core\Traits\Service\TextHelperTrait;
+use OrangeHRM\Core\Utility\Sanitizer;
 
 class RequestParams
 {
+    use TextHelperTrait;
+
     public const PARAM_TYPE_BODY = 'body';
     public const PARAM_TYPE_ATTRIBUTE = 'attributes';
     public const PARAM_TYPE_QUERY = 'query';
@@ -192,10 +196,10 @@ class RequestParams
      * @OA\Schema(
      *     schema="Base64Attachment",
      *     type="object",
-     *     @OA\Property(property="name", type="string"),
-     *     @OA\Property(property="type", type="string"),
-     *     @OA\Property(property="base64", type="string", format="base64"),
-     *     @OA\Property(property="size", type="integer"),
+     *     @OA\Property(property="name", description="Specify the name of the attachment", type="string"),
+     *     @OA\Property(property="type", description="Specify the type of the attachment", type="string"),
+     *     @OA\Property(property="base64", description="Specify the attachment in Base64 format", type="string", format="base64"),
+     *     @OA\Property(property="size", description="Specify the size of the attachment", type="integer"),
      * )
      *
      * @param string $type
@@ -229,12 +233,29 @@ class RequestParams
     {
         $attachment = $this->$type->get($key, $default);
         if (isset($attachment['name']) && isset($attachment['type']) && isset($attachment['base64']) && isset($attachment['size'])) {
-            return new Base64Attachment(
+            $attachment = new Base64Attachment(
                 $attachment['name'],
                 $attachment['type'],
                 $attachment['base64'],
                 $attachment['size']
             );
+
+            // Check for SVG and sanitize
+            if ($attachment->getFileType() === 'image/svg+xml') {
+                $sanitizer = new Sanitizer();
+                try {
+                    $sanitizedContent = $sanitizer->sanitizeSvg($attachment->getContent());
+
+                    $attachment->setContent($sanitizedContent);
+                    $attachment->setSize($this->getTextHelper()->strLength($sanitizedContent));
+                } catch (SanitizerException $e) {
+                    throw new InvalidParamException([
+                        $key => new InvalidArgumentException($e->getMessage())
+                    ]);
+                }
+            }
+
+            return $attachment;
         }
 
         return null;

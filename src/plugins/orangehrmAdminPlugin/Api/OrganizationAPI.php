@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Admin\Api;
@@ -91,6 +90,8 @@ class OrganizationAPI extends Endpoint implements CrudEndpoint
      * @OA\Get(
      *     path="/api/v2/admin/organization",
      *     tags={"Admin/Organization"},
+     *     summary="Get Organization Details",
+     *     operationId="get-organization-details",
      *     @OA\Response(
      *         response="200",
      *         description="Success",
@@ -179,21 +180,24 @@ class OrganizationAPI extends Endpoint implements CrudEndpoint
      * @OA\Put(
      *     path="/api/v2/admin/organization",
      *     tags={"Admin/Organization"},
+     *     summary="Update Organization Details",
+     *     operationId="update-organization-details",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="registrationNumber", type="string"),
-     *             @OA\Property(property="phone", type="string"),
-     *             @OA\Property(property="fax", type="string"),
-     *             @OA\Property(property="email", type="string"),
-     *             @OA\Property(property="country", type="string"),
-     *             @OA\Property(property="province", type="string"),
-     *             @OA\Property(property="city", type="string"),
-     *             @OA\Property(property="zipCode", type="string"),
-     *             @OA\Property(property="street1", type="string"),
-     *             @OA\Property(property="street2", type="string"),
-     *             @OA\Property(property="note", type="string"),
+     *             @OA\Property(property="name", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_NAME_MAX_LENGTH),
+     *             @OA\Property(property="registrationNumber", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_REGISTRATION_NUMBER_MAX_LENGTH),
+     *             @OA\Property(property="taxId", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_TAX_ID_MAX_LENGTH),
+     *             @OA\Property(property="phone", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_PHONE_MAX_LENGTH),
+     *             @OA\Property(property="fax", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_FAX_MAX_LENGTH),
+     *             @OA\Property(property="email", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_EMAIL_MAX_LENGTH),
+     *             @OA\Property(property="country", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_COUNTRY_MAX_LENGTH),
+     *             @OA\Property(property="province", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_PROVINCE_MAX_LENGTH),
+     *             @OA\Property(property="city", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_CITY_MAX_LENGTH),
+     *             @OA\Property(property="zipCode", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_ZIP_CODE_MAX_LENGTH),
+     *             @OA\Property(property="street1", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_STREET_1_MAX_LENGTH),
+     *             @OA\Property(property="street2", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_STREET_2_MAX_LENGTH),
+     *             @OA\Property(property="note", type="string", maxLength=OrangeHRM\Admin\Api\OrganizationAPI::PARAM_RULE_NOTE_MAX_LENGTH),
      *             required={"name"}
      *         )
      *     ),

@@ -4,17 +4,16 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
 namespace OrangeHRM\Performance\Api;
@@ -57,25 +56,27 @@ class KpiAPI extends Endpoint implements CrudEndpoint
     public const PARAM_RULE_TITLE_MAX_LENGTH = 100;
 
     /**
-     *@OA\Get(
+     * @OA\Get(
      *     path="/api/v2/performance/kpis/{id}",
-     *     tags={"Performance/Configure Kpis"},
-     * @OA\PathParameter(
-     *     name="id",
-     *     @OA\Schema(type="integer")
-     * ),
-     * @OA\Response(
-     *     response="200",
-     *     description="Success",
-     *     @OA\JsonContent(
-     *         @OA\Property(
-     *             property="data",
-     *             ref="#/components/schemas/Performance-KpiModel"
-     *         ),
-     *         @OA\Property(property="meta", type="object")
-     *     )
-     * ),
-     * @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
+     *     tags={"Performance/KPI Configuration"},
+     *     summary="Get a KPI",
+     *     operationId="get-a-kpi",
+     *     @OA\PathParameter(
+     *         name="id",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Performance-KpiModel"
+     *             ),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
@@ -109,7 +110,9 @@ class KpiAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Get(
      *     path="/api/v2/performance/kpis",
-     *     tags={"Performance/Configure Kpis"},
+     *     tags={"Performance/KPI Configuration"},
+     *     summary="List All KPIs",
+     *     operationId="list-all-kpis",
      *     @OA\Parameter(
      *         name="jobTitleId",
      *         in="query",
@@ -181,7 +184,9 @@ class KpiAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Post(
      *     path="/api/v2/performance/kpis",
-     *     tags={"Performance/Configure Kpis"},
+     *     tags={"Performance/KPI Configuration"},
+     *     summary="Create a KPI",
+     *     operationId="create-a-kpi",
      *     @OA\RequestBody(
      *         @OA\JsonContent(
      *             type="object",
@@ -311,7 +316,9 @@ class KpiAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Put(
      *     path="/api/v2/performance/kpis/{id}",
-     *     tags={"Performance/Configure Kpis"},
+     *     tags={"Performance/KPI Configuration"},
+     *     summary="Update a KPI",
+     *     operationId="update-a-kpi",
      *     @OA\PathParameter(
      *         name="id",
      *         @OA\Schema(type="integer")
@@ -372,16 +379,22 @@ class KpiAPI extends Endpoint implements CrudEndpoint
     /**
      * @OA\Delete(
      *     path="/api/v2/performance/kpis",
-     *     tags={"Performance/Configure Kpis"},
+     *     tags={"Performance/KPI Configuration"},
+     *     summary="Delete KPIs",
+     *     operationId="delete-kpis",
      *     @OA\RequestBody(ref="#/components/requestBodies/DeleteRequestBody"),
-     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse")
+     *     @OA\Response(response="200", ref="#/components/responses/DeleteResponse"),
+     *     @OA\Response(response="404", ref="#/components/responses/RecordNotFound")
      * )
      *
      * @inheritDoc
      */
     public function delete(): EndpointResult
     {
-        $ids = $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS);
+        $ids = $this->getKpiService()->getKpiDao()->getExistingKpiIds(
+            $this->getRequestParams()->getArray(RequestParams::PARAM_TYPE_BODY, CommonParams::PARAMETER_IDS)
+        );
+        $this->throwRecordNotFoundExceptionIfEmptyIds($ids);
         $this->getKpiService()->getKpiDao()->deleteKpi($ids);
         return new EndpointResourceResult(ArrayModel::class, $ids);
     }

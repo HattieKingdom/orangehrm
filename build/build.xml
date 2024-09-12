@@ -5,31 +5,29 @@
  * all the essential functionalities required for any enterprise.
  * Copyright (C) 2006 OrangeHRM Inc., http://www.orangehrm.com
  *
- * OrangeHRM is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * OrangeHRM is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
  *
  * OrangeHRM is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA  02110-1301, USA
- *
- * @copyright 2006 OrangeHRM Inc., http://www.orangehrm.com
+ * You should have received a copy of the GNU General Public License along with OrangeHRM.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 -->
 <project name="OrangeHRM" basedir="." default="dist">
 
-  <property name="version" value="5.5"/>
+  <property name="version" value="5.7"/>
   <property name="package.name" value="orangehrm-${version}"/>
   <resolvepath propertyName="project.dir" file=".."/>
   <resolvepath propertyName="dist.dir" file="dist"/>
   <property name="package.dir" value="${dist.dir}/${package.name}"/>
 
-  <exec command="git rev-list --tags --max-count=1" dir="${project.dir}" checkreturn="false"
-        outputProperty="git.revision"/>
+  <exec executable="git" dir="${project.dir}" checkreturn="false" outputProperty="git.revision">
+    <arg value="rev-list --tags --max-count=1" />
+  </exec>
   <property name="base.name" value="${package.name}.${git.revision}"/>
 
   <target name="prepare">
@@ -40,13 +38,21 @@
   </target>
 
   <target name="deps.5x">
-    <exec command="composer install --no-dev" dir="${project.dir}/src" checkreturn="false" passthru="true"/>
-    <exec command="composer dump-autoload --optimize --no-dev --classmap-authoritative" dir="${project.dir}/src" checkreturn="false" passthru="true"/>
-    <exec command="yarn install" dir="${project.dir}/src/client" checkreturn="false" passthru="true"/>
+    <exec executable="composer" dir="${project.dir}/src" checkreturn="false" passthru="true">
+      <arg value="install --no-dev" />
+    </exec>
+    <exec executable="composer" dir="${project.dir}/src" checkreturn="false" passthru="true">
+      <arg value="dump-autoload --optimize --no-dev --classmap-authoritative" />
+    </exec>
+    <exec executable="yarn" dir="${project.dir}/src/client" checkreturn="false" passthru="true">
+      <arg value="install" />
+    </exec>
   </target>
 
   <target name="build.client">
-    <exec command="yarn build" dir="${project.dir}/src/client" checkreturn="false" passthru="true"/>
+    <exec executable="yarn" dir="${project.dir}/src/client" checkreturn="false" passthru="true">
+      <arg value="build" />
+    </exec>
   </target>
 
   <target name="build" depends="prepare,clean">
@@ -68,9 +74,6 @@
         <exclude name="src/test/**"/>
         <exclude name="src/plugins/**/test/**"/>
 
-        <exclude name="src/plugins/orangehrmAuthenticationPlugin/lib/**"/>
-        <exclude name="src/plugins/orangehrmCoreOAuthPlugin/lib/**"/>
-        <exclude name="src/plugins/orangehrmOpenidAuthenticationPlugin/**"/>
         <exclude name="src/plugins/orangehrmRESTPlugin/**"/>
 
         <!-- 5.x related -->
